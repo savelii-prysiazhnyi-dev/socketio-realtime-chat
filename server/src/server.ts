@@ -14,6 +14,7 @@ const io = new Server(httpServer, {
 
 io.on('connection', socket => {
   console.log(`${socket.id} connected`);
+  socket.emit('data', 'message from the server!');
 });
 
 httpServer.listen(PORT, () => {
