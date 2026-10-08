@@ -3,6 +3,7 @@ import cors from 'cors';
 import { pinoHttp } from 'pino-http';
 import { getCorsSettings } from './utils/cors.js';
 import { logger } from './utils/logger.js';
+import { apiRoutes } from './routes/index.js';
 import { errorHandler } from './utils/errorHandler.js';
 
 export const buildApp = (): Express => {
@@ -28,6 +29,8 @@ export const buildApp = (): Express => {
   app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'ok' });
   });
+
+  app.use('/api', apiRoutes);
 
   app.use(errorHandler);
 
