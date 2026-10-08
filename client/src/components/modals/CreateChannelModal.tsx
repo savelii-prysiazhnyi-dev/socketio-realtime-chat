@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, type FormEvent } from 'react';
 import { Dialog } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
 import { Button } from '../ui/button.tsx';
@@ -17,13 +17,13 @@ export function CreateChannelModal({
   groupId,
   onSuccess,
 }: CreateChannelModalProps) {
-  const [name, setName] = React.useState('');
-  const [topic, setTopic] = React.useState('');
-  const [error, setError] = React.useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [topic, setTopic] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const createChannelMutation = useCreateChannel(groupId);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const cleanName = name.trim().toLowerCase();
 

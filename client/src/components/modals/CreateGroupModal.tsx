@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, type FormEvent } from 'react';
 import { Dialog } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
 import { Button } from '../ui/button.tsx';
@@ -15,12 +15,12 @@ export function CreateGroupModal({
   onOpenChange,
   onSuccess,
 }: CreateGroupModalProps) {
-  const [name, setName] = React.useState('');
-  const [error, setError] = React.useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const createGroupMutation = useCreateGroup();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setError('Group name cannot be empty');

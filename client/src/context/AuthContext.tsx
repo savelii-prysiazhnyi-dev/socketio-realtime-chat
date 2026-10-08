@@ -1,16 +1,16 @@
-import * as React from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { demoLogin, logout as logoutApi } from '../api/auth.api.ts';
 import { setAuthToken } from '../lib/axios.ts';
 import type { User } from '../types/index.ts';
 import { AuthContext } from './auth-context.ts';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setTokenState] = React.useState<string | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
-  const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null);
-  const [loginError, setLoginError] = React.useState<string | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setTokenState] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 

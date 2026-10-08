@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils.ts';
 import { Button } from './button.tsx';
@@ -8,7 +8,7 @@ export interface DialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function Dialog({
@@ -18,7 +18,7 @@ export function Dialog({
   description,
   children,
 }: DialogProps) {
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onOpenChange(false);

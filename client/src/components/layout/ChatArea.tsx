@@ -1,4 +1,11 @@
-import * as React from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+  type KeyboardEvent,
+} from 'react';
 import {
   Hash,
   SendHorizontal,
@@ -32,19 +39,19 @@ export function ChatArea({
   onToggleMembers,
   membersOpen,
 }: ChatAreaProps) {
-  const [content, setContent] = React.useState('');
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [content, setContent] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const sendMessageMutation = useSendMessage(channel?.id);
 
   const messages = messagesData?.messages || [];
 
-  React.useEffect(() => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  const adjustTextareaHeight = React.useCallback(() => {
+  const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
@@ -53,7 +60,7 @@ export function ChatArea({
     textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
   }, []);
 
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     adjustTextareaHeight();
   }, [content, adjustTextareaHeight]);
 
@@ -74,7 +81,7 @@ export function ChatArea({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();

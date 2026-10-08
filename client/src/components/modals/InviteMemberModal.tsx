@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, type FormEvent } from 'react';
 import { Dialog } from '../ui/dialog.tsx';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
@@ -17,9 +17,9 @@ export function InviteMemberModal({
   onOpenChange,
   groupId,
 }: InviteMemberModalProps) {
-  const [selectedUserId, setSelectedUserId] = React.useState('');
-  const [role, setRole] = React.useState<MemberRole>('MEMBER');
-  const [error, setError] = React.useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [role, setRole] = useState<MemberRole>('MEMBER');
+  const [error, setError] = useState<string | null>(null);
 
   const { data: allUsers = [] } = useUsers();
   const { data: currentMembers = [] } = useGroupMembers(groupId);
@@ -28,7 +28,7 @@ export function InviteMemberModal({
   const existingUserIds = new Set(currentMembers.map((m) => m.userId));
   const availableUsers = allUsers.filter((u) => !existingUserIds.has(u.id));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedUserId) {
       setError('Please select a user to invite');

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { createContext, useContext } from 'react';
 import type { User } from '../types/index.ts';
 
 export interface AuthContextType {
@@ -11,12 +11,12 @@ export interface AuthContextType {
   loginError: string | null;
 }
 
-export const AuthContext = React.createContext<AuthContextType | undefined>(
+export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
 
 export function useAuth(): AuthContextType {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

@@ -1,7 +1,7 @@
-import * as React from 'react';
+import { useState, type HTMLAttributes } from 'react';
 import { cn } from '../../lib/utils.ts';
 
-export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   name: string;
   src?: string | null;
   size?: 'sm' | 'md' | 'lg';
@@ -14,7 +14,7 @@ export function Avatar({
   className,
   ...props
 }: AvatarProps) {
-  const [imageError, setImageError] = React.useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const sizes = {
     sm: 'h-6 w-6 text-[10px]',

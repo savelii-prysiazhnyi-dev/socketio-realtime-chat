@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState } from 'react';
 import {
   QueryClient,
   QueryClientProvider,
@@ -34,14 +34,14 @@ interface ChatWorkspaceProps {
 }
 
 function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
-  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
-  const [activeChannelId, setActiveChannelId] = React.useState<string | null>(null);
-  const [membersOpen, setMembersOpen] = React.useState(true);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
+  const [membersOpen, setMembersOpen] = useState(true);
 
-  const [createGroupOpen, setCreateGroupOpen] = React.useState(false);
-  const [createChannelOpen, setCreateChannelOpen] = React.useState(false);
-  const [inviteMemberOpen, setInviteMemberOpen] = React.useState(false);
-  const [demoLoginOpen, setDemoLoginOpen] = React.useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = useState(false);
+  const [inviteMemberOpen, setInviteMemberOpen] = useState(false);
+  const [demoLoginOpen, setDemoLoginOpen] = useState(false);
 
   const { data: groups = [] } = useGroups();
   const effectiveGroupId =

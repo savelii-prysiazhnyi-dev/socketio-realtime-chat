@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { UserPlus, Shield, Crown } from 'lucide-react';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
@@ -24,7 +25,7 @@ export function MembersSidebar({
   const renderMemberSection = (
     title: string,
     list: GroupMember[],
-    icon?: React.ReactNode,
+    icon?: ReactNode,
   ) => {
     if (list.length === 0) return null;
 
