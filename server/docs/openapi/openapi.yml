@@ -1,0 +1,1020 @@
+openapi: 3.0.3
+info:
+  title: Chat Workspace REST API
+  description: REST API for workspace collaboration, chat channels, messaging, and role-based permissions.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+tags:
+  - name: Health
+    description: Service health monitoring
+  - name: Auth
+    description: Authentication & session management
+  - name: Users
+    description: User directory & profiles
+  - name: Groups
+    description: Workspace groups & membership management
+  - name: Channels
+    description: Communication channels within workspaces
+  - name: Messages
+    description: Real-time channel messages & cursor pagination
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns operational status of the API server.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/auth/demo-login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with demo profile
+      description: Signs in as an existing demo persona using user ID and issues a JWT bearer token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoLoginRequest'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoLoginResponse'
+        '400':
+          description: Invalid request body or malformed UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current authenticated user
+      description: Returns the user profile associated with the provided JWT bearer token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Missing or invalid authentication token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: List registered demo users
+      description: Returns a list of all registered users in the database, ordered by name.
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /api/groups:
+    get:
+      tags:
+        - Groups
+      summary: List user workspaces
+      description: Returns all group workspaces where the authenticated user is a member.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Groups
+      summary: Create workspace group
+      description: Creates a new group workspace. The creator becomes OWNER and a default #general channel is provisioned.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Workspace created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGroupResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/groups/{groupId}:
+    get:
+      tags:
+        - Groups
+      summary: Get workspace details
+      description: Retrieves workspace details along with the authenticated user's role. Requires membership in the group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: UUID of the workspace group
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDetail'
+        '400':
+          description: Invalid group ID parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/groups/{groupId}/members:
+    get:
+      tags:
+        - Groups
+      summary: List workspace members
+      description: Returns all members of the specified group workspace. Requires membership in the group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: UUID of the workspace group
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of workspace members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupMember'
+        '400':
+          description: Invalid group ID parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Groups
+      summary: Invite member to workspace
+      description: Adds a registered user to the group workspace. Requires OWNER or ADMIN role.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: UUID of the workspace group
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '201':
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMember'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Only OWNER or ADMIN can invite members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Target user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - User is already a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/groups/{groupId}/channels:
+    get:
+      tags:
+        - Channels
+      summary: List workspace channels
+      description: Returns all channels belonging to the specified group workspace. Requires membership in the group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: UUID of the workspace group
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Channel'
+        '400':
+          description: Invalid group ID parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Channels
+      summary: Create channel in workspace
+      description: Creates a new channel in the group workspace. Requires OWNER or ADMIN role.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: UUID of the workspace group
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Only OWNER or ADMIN can create channels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Channel name already exists in this workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/channels/{channelId}:
+    get:
+      tags:
+        - Channels
+      summary: Get channel details
+      description: Retrieves channel details including its workspace summary. Requires membership in the channel's workspace group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          description: UUID of the channel
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelDetail'
+        '400':
+          description: Invalid channel ID parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of the workspace group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/channels/{channelId}/messages:
+    get:
+      tags:
+        - Messages
+      summary: List channel messages
+      description: Returns messages in reverse chronological order for a channel using cursor-based pagination. Requires membership in the channel's workspace group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          description: UUID of the channel
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of messages to return (between 1 and 100, default 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          description: UUID of the message cursor for pagination
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of messages with optional next cursor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMessagesResponse'
+        '400':
+          description: Invalid channel ID or query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of the workspace group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Messages
+      summary: Post message to channel
+      description: Creates a new message in the specified channel. Requires membership in the channel's workspace group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          description: UUID of the channel
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageRequest'
+      responses:
+        '201':
+          description: Message posted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid request parameters or content length
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Not a member of the workspace group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token returned from /api/auth/demo-login
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: object
+          nullable: true
+        cause:
+          type: object
+          nullable: true
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          example: alice@test.com
+        name:
+          type: string
+          example: Alice Johnson
+        avatar:
+          type: string
+          nullable: true
+          example: https://api.dicebear.com/7.x/avataaars/svg?seed=Alice
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+
+    DemoLoginRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+
+    DemoLoginResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/User'
+
+    MemberRole:
+      type: string
+      enum:
+        - OWNER
+        - ADMIN
+        - MEMBER
+      example: MEMBER
+
+    GroupSummary:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - members
+        - _count
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        name:
+          type: string
+          example: Core Engineering
+        icon:
+          type: string
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+        members:
+          type: array
+          items:
+            type: object
+            required:
+              - role
+            properties:
+              role:
+                $ref: '#/components/schemas/MemberRole'
+        _count:
+          type: object
+          required:
+            - members
+            - channels
+          properties:
+            members:
+              type: integer
+              example: 3
+            channels:
+              type: integer
+              example: 2
+
+    GroupDetail:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - role
+        - _count
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        name:
+          type: string
+          example: Core Engineering
+        icon:
+          type: string
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+        role:
+          $ref: '#/components/schemas/MemberRole'
+        _count:
+          type: object
+          required:
+            - members
+            - channels
+          properties:
+            members:
+              type: integer
+              example: 3
+            channels:
+              type: integer
+              example: 2
+
+    CreateGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Core Engineering
+        icon:
+          type: string
+          nullable: true
+          example: ''
+
+    CreateGroupResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - members
+        - channels
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        name:
+          type: string
+          example: Core Engineering
+        icon:
+          type: string
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMember'
+
+    GroupMember:
+      type: object
+      required:
+        - userId
+        - groupId
+        - role
+        - joinedAt
+        - user
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        groupId:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        role:
+          $ref: '#/components/schemas/MemberRole'
+        joinedAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+        user:
+          type: object
+          required:
+            - id
+            - name
+            - email
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 123e4567-e89b-12d3-a456-426614174000
+            name:
+              type: string
+              example: Alice Johnson
+            email:
+              type: string
+              format: email
+              example: alice@test.com
+            avatar:
+              type: string
+              nullable: true
+              example: null
+
+    AddMemberRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: 333e4567-e89b-12d3-a456-426614174002
+        role:
+          $ref: '#/components/schemas/MemberRole'
+          default: MEMBER
+
+    Channel:
+      type: object
+      required:
+        - id
+        - name
+        - groupId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 443e4567-e89b-12d3-a456-426614174003
+        name:
+          type: string
+          example: general
+        topic:
+          type: string
+          nullable: true
+          example: General team discussions
+        groupId:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+
+    ChannelDetail:
+      type: object
+      required:
+        - id
+        - name
+        - groupId
+        - createdAt
+        - group
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 443e4567-e89b-12d3-a456-426614174003
+        name:
+          type: string
+          example: general
+        topic:
+          type: string
+          nullable: true
+          example: General team discussions
+        groupId:
+          type: string
+          format: uuid
+          example: 223e4567-e89b-12d3-a456-426614174001
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:00:00.000Z'
+        group:
+          type: object
+          required:
+            - id
+            - name
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 223e4567-e89b-12d3-a456-426614174001
+            name:
+              type: string
+              example: Core Engineering
+
+    CreateChannelRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[a-z0-9-_]+$'
+          example: dev-updates
+        topic:
+          type: string
+          maxLength: 255
+          nullable: true
+          example: Development progress announcements
+
+    MessageUser:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          example: Alice Johnson
+        avatar:
+          type: string
+          nullable: true
+          example: null
+
+    Message:
+      type: object
+      required:
+        - id
+        - content
+        - channelId
+        - userId
+        - createdAt
+        - user
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 553e4567-e89b-12d3-a456-426614174004
+        content:
+          type: string
+          example: Hello team, the new deployment is live!
+        channelId:
+          type: string
+          format: uuid
+          example: 443e4567-e89b-12d3-a456-426614174003
+        userId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-10-08T12:05:00.000Z'
+        user:
+          $ref: '#/components/schemas/MessageUser'
+
+    CreateMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          example: Hello team, the new deployment is live!
+
+    ChannelMessagesResponse:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        nextCursor:
+          type: string
+          format: uuid
+          nullable: true
+          example: 553e4567-e89b-12d3-a456-426614174004
