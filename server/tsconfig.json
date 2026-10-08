@@ -13,6 +13,11 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true
   },
-  "include": ["src/**/*", "prisma7.config.ts"],
+  "include": [
+    "src/**/*",
+    "prisma7.config.ts",
+    "vitest.config.ts",
+    "tests/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }
