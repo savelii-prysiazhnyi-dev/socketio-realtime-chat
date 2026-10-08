@@ -90,6 +90,7 @@ function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
       />
 
       <ChatArea
+        key={effectiveChannelId ?? 'none'}
         channel={activeChannel}
         messagesData={messagesData}
         isLoadingMessages={isLoadingMessages}

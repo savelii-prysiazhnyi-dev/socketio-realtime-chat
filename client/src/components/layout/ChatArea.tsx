@@ -44,6 +44,20 @@ export function ChatArea({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
+  const adjustTextareaHeight = React.useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, 20), 200);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
+  }, []);
+
+  React.useLayoutEffect(() => {
+    adjustTextareaHeight();
+  }, [content, adjustTextareaHeight]);
+
+
   const handleSend = async () => {
     const trimmed = content.trim();
     if (!trimmed || !channel || sendMessageMutation.isPending) return;
@@ -52,7 +66,8 @@ export function ChatArea({
       await sendMessageMutation.mutateAsync(trimmed);
       setContent('');
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = '20px';
+        textareaRef.current.style.overflowY = 'hidden';
       }
     } catch (err) {
       console.error(err);
@@ -181,28 +196,33 @@ export function ChatArea({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80">
-        <div className="relative rounded-lg border border-zinc-800 bg-[#121215] p-2 focus-within:border-zinc-700 transition-colors">
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            value={content}
-            onChange={(e) => {
-              if (e.target.value.length <= 4000) {
-                setContent(e.target.value);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message #${channel.name}... (Press Enter to send)`}
-            className="w-full resize-none bg-transparent text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none max-h-32 min-h-[24px]"
-          />
+      <div className="relative p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 min-h-[103px] h-[103px] shrink-0 z-10">
+        <div className="absolute bottom-3 left-3 right-3 rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow] z-20">
+          <div className="px-3.5 pt-2.5 pb-2.5">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={content}
+              onChange={(e) => {
+                if (e.target.value.length <= 4000) {
+                  setContent(e.target.value);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={`Message #${channel.name}... (Press Enter to send)`}
+              className="w-full resize-none bg-transparent text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none leading-5 block m-0 p-0 break-words"
+              style={{ minHeight: '20px', maxHeight: '200px' }}
+            />
+          </div>
 
-          <div className="flex items-center justify-between pt-1 text-[10px] text-zinc-600 border-t border-zinc-800/40 mt-1">
-            <span>
-              {content.length > 0 && `${content.length} / 4000`}
+          <div className="h-[1px] bg-zinc-800/60 w-full" />
+
+          <div className="flex items-center justify-between px-3.5 py-1.5 text-[10px] text-zinc-500 bg-zinc-950/30 rounded-b-lg">
+            <span className="font-mono text-[10px] text-zinc-500">
+              {content.length > 0 ? `${content.length} / 4000` : ''}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-zinc-600">
+            <div className="flex items-center gap-2.5">
+              <span className="hidden sm:inline text-zinc-500 text-[11px]">
                 Shift + Enter for new line
               </span>
               <Button
@@ -210,7 +230,7 @@ export function ChatArea({
                 size="xs"
                 disabled={!content.trim() || sendMessageMutation.isPending}
                 onClick={handleSend}
-                className="gap-1"
+                className="gap-1.5 h-6 px-2.5 text-[11px] font-medium"
               >
                 <span>Send</span>
                 <SendHorizontal className="w-2.5 h-2.5" />
