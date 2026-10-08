@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  avatar    String?
+  createdAt DateTime @default(now())
+
+  memberships GroupMember[]
+  messages    Message[]
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  icon      String?
+  createdAt DateTime @default(now())
+
+  members  GroupMember[]
+  channels Channel[]
+}
+
+model GroupMember {
+  userId   String
+  groupId  String
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+  @@index([groupId])
+}
+
+model Channel {
+  id        String   @id @default(uuid())
+  name      String
+  topic     String?
+  groupId   String
+  createdAt DateTime @default(now())
+
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([groupId, name])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  channelId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+}
