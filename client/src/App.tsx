@@ -1,37 +1,172 @@
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import * as React from 'react';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+import { GroupRail } from './components/layout/GroupRail.tsx';
+import { ChannelSidebar } from './components/layout/ChannelSidebar.tsx';
+import { ChatArea } from './components/layout/ChatArea.tsx';
+import { MembersSidebar } from './components/layout/MembersSidebar.tsx';
+import { CreateGroupModal } from './components/modals/CreateGroupModal.tsx';
+import { CreateChannelModal } from './components/modals/CreateChannelModal.tsx';
+import { InviteMemberModal } from './components/modals/InviteMemberModal.tsx';
+import { DemoLoginModal } from './components/modals/DemoLoginModal.tsx';
+import { ProfileSelector } from './components/auth/ProfileSelector.tsx';
+import { AuthProvider } from './context/AuthContext.tsx';
+import { useAuth, useUsers } from './hooks/useAuth.ts';
+import { useGroups, useGroup, useGroupMembers } from './hooks/useGroups.ts';
+import { useGroupChannels, useChannel } from './hooks/useChannels.ts';
+import { useChannelMessages } from './hooks/useMessages.ts';
+import type { User } from './types/index.ts';
 
-const socket = io("http://localhost:3000");
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => {
-  const [connected, setConnected] = useState<boolean>(socket.connected);
-  const [message, setMessage] = useState<string>("");
+interface ChatWorkspaceProps {
+  currentUser: User;
+  onLogout: () => void;
+}
 
-  useEffect(() => {
-    const onConnect = () => setConnected(true);
-    const onDisconnect = () => setConnected(false);
-    const onData = (data: string) => {
-      console.log("Received data:", data);
-      setMessage(data);
-    };
+function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
+  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
+  const [activeChannelId, setActiveChannelId] = React.useState<string | null>(null);
+  const [membersOpen, setMembersOpen] = React.useState(true);
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("data", onData);
+  const [createGroupOpen, setCreateGroupOpen] = React.useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = React.useState(false);
+  const [inviteMemberOpen, setInviteMemberOpen] = React.useState(false);
+  const [demoLoginOpen, setDemoLoginOpen] = React.useState(false);
 
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("data", onData);
-    };
-  }, []);
+  const { data: groups = [] } = useGroups();
+  const effectiveGroupId =
+    activeGroupId && groups.some((g) => g.id === activeGroupId)
+      ? activeGroupId
+      : groups[0]?.id ?? null;
+
+  const { data: activeGroup } = useGroup(effectiveGroupId || undefined);
+  const { data: members = [] } = useGroupMembers(effectiveGroupId || undefined);
+  const { data: channels = [] } = useGroupChannels(effectiveGroupId || undefined);
+
+  const effectiveChannelId =
+    activeChannelId && channels.some((c) => c.id === activeChannelId)
+      ? activeChannelId
+      : channels[0]?.id ?? null;
+
+  const { data: activeChannel } = useChannel(effectiveChannelId || undefined);
+
+  const {
+    data: messagesData,
+    isLoading: isLoadingMessages,
+  } = useChannelMessages(effectiveChannelId || undefined);
 
   return (
-    <div>
-      <div>Status: {connected ? "connected" : "not connected"}</div>
-      {message && <div>Message from server: {message}</div>}
+    <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">
+      <GroupRail
+        groups={groups}
+        activeGroupId={effectiveGroupId}
+        onSelectGroup={(id) => {
+          setActiveGroupId(id);
+          setActiveChannelId(null);
+        }}
+        onOpenCreateGroup={() => setCreateGroupOpen(true)}
+        onOpenDemoLogin={() => setDemoLoginOpen(true)}
+      />
+
+      <ChannelSidebar
+        group={activeGroup}
+        channels={channels}
+        activeChannelId={effectiveChannelId}
+        currentUser={currentUser}
+        onSelectChannel={(id) => setActiveChannelId(id)}
+        onOpenCreateChannel={() => setCreateChannelOpen(true)}
+        onOpenDemoLogin={() => setDemoLoginOpen(true)}
+        onLogout={onLogout}
+      />
+
+      <ChatArea
+        channel={activeChannel}
+        messagesData={messagesData}
+        isLoadingMessages={isLoadingMessages}
+        onToggleMembers={() => setMembersOpen((prev) => !prev)}
+        membersOpen={membersOpen}
+      />
+
+      {membersOpen && effectiveGroupId && (
+        <MembersSidebar
+          group={activeGroup}
+          members={members}
+          onOpenInvite={() => setInviteMemberOpen(true)}
+        />
+      )}
+
+      <CreateGroupModal
+        open={createGroupOpen}
+        onOpenChange={setCreateGroupOpen}
+        onSuccess={(newGroupId) => {
+          setActiveGroupId(newGroupId);
+        }}
+      />
+
+      {effectiveGroupId && (
+        <CreateChannelModal
+          open={createChannelOpen}
+          onOpenChange={setCreateChannelOpen}
+          groupId={effectiveGroupId}
+          onSuccess={(newChannelId) => {
+            setActiveChannelId(newChannelId);
+          }}
+        />
+      )}
+
+      {effectiveGroupId && (
+        <InviteMemberModal
+          open={inviteMemberOpen}
+          onOpenChange={setInviteMemberOpen}
+          groupId={effectiveGroupId}
+        />
+      )}
+
+      <DemoLoginModal
+        open={demoLoginOpen}
+        onOpenChange={setDemoLoginOpen}
+      />
     </div>
   );
-};
+}
 
-export default App;
+function ChatApp() {
+  const { currentUser, login, logout, isLoggingIn, selectedUserId } = useAuth();
+  const { data: users = [], isLoading: isUsersLoading } = useUsers();
+
+  if (!currentUser) {
+    return (
+      <ProfileSelector
+        users={users}
+        isLoading={users.length === 0 && isUsersLoading}
+        onSelect={(userId) => {
+          void login(userId);
+        }}
+        isLoggingIn={isLoggingIn}
+        selectedUserId={selectedUserId}
+      />
+    );
+  }
+
+  return <ChatWorkspace currentUser={currentUser} onLogout={logout} />;
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ChatApp />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
