@@ -2,9 +2,10 @@
   "name": "ws",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "build": "tsc",
+    "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -22,15 +23,34 @@
     }
   },
   "packageManager": "pnpm@12.9.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "better-sqlite3",
+      "prisma"
+    ]
+  },
   "type": "module",
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
     "express": "^5.2.1",
-    "socket.io": "^4.8.4"
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
     "oxlint": "^1.87.0",
+    "pino-pretty": "^13.2.0",
+    "prisma": "^7.10.0",
     "typescript": "^7.0.2"
   }
 }
