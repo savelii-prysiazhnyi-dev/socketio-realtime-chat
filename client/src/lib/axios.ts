@@ -25,11 +25,21 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+type UnauthorizedHandler = () => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+export const setUnauthorizedHandler = (
+  handler: UnauthorizedHandler | null,
+): void => {
+  unauthorizedHandler = handler;
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       setAuthToken(null);
+      unauthorizedHandler?.();
     }
     return Promise.reject(error);
   },

@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { demoLogin, logout as logoutApi } from '../api/auth.api.ts';
-import { setAuthToken } from '../lib/axios.ts';
+import { setAuthToken, setUnauthorizedHandler } from '../lib/axios.ts';
 import type { User } from '../types/index.ts';
 import { AuthContext } from './auth-context.ts';
 
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     logoutApi();
     setAuthToken(null);
     setTokenState(null);
@@ -51,7 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.removeQueries({ queryKey: ['groups'] });
     queryClient.removeQueries({ queryKey: ['channels'] });
     queryClient.removeQueries({ queryKey: ['messages'] });
-  };
+  }, [queryClient]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logout();
+    });
+    return () => {
+      setUnauthorizedHandler(null);
+    };
+  }, [logout]);
 
   return (
     <AuthContext.Provider
