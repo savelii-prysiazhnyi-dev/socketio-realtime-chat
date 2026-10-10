@@ -16,6 +16,7 @@ import {
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { useSendMessage } from '../../hooks/useMessages.ts';
+import { useSocketStore } from '../../stores/useSocketStore.ts';
 import type { Channel, Message, MessagesResponse } from '../../types/index.ts';
 
 interface ChatAreaProps {
@@ -42,6 +43,16 @@ export function ChatArea({
   const [content, setContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lastTypingSentRef = useRef<number>(0);
+  const typingInactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const typingUserIds = useSocketStore((state) =>
+    channel ? state.typingUsers[channel.id] : undefined,
+  );
+  const sendTypingStart = useSocketStore((state) => state.sendTypingStart);
+  const sendTypingStop = useSocketStore((state) => state.sendTypingStop);
+
+  const activeTypingCount = typingUserIds?.size ?? 0;
 
   const sendMessageMutation = useSendMessage(channel?.id);
 
@@ -50,6 +61,17 @@ export function ChatArea({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  useEffect(() => {
+    return () => {
+      if (typingInactivityTimeoutRef.current) {
+        clearTimeout(typingInactivityTimeoutRef.current);
+      }
+      if (channel) {
+        sendTypingStop(channel.groupId, channel.id);
+      }
+    };
+  }, [channel, sendTypingStop]);
 
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -64,10 +86,34 @@ export function ChatArea({
     adjustTextareaHeight();
   }, [content, adjustTextareaHeight]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length <= 4000) {
+      setContent(e.target.value);
+    }
+    if (!channel) return;
+
+    const now = Date.now();
+    if (now - lastTypingSentRef.current > 2000) {
+      sendTypingStart(channel.groupId, channel.id);
+      lastTypingSentRef.current = now;
+    }
+
+    if (typingInactivityTimeoutRef.current) {
+      clearTimeout(typingInactivityTimeoutRef.current);
+    }
+    typingInactivityTimeoutRef.current = setTimeout(() => {
+      sendTypingStop(channel.groupId, channel.id);
+    }, 2500);
+  };
 
   const handleSend = async () => {
     const trimmed = content.trim();
     if (!trimmed || !channel || sendMessageMutation.isPending) return;
+
+    if (typingInactivityTimeoutRef.current) {
+      clearTimeout(typingInactivityTimeoutRef.current);
+    }
+    sendTypingStop(channel.groupId, channel.id);
 
     try {
       await sendMessageMutation.mutateAsync(trimmed);
@@ -203,6 +249,17 @@ export function ChatArea({
         <div ref={messagesEndRef} />
       </div>
 
+      {activeTypingCount > 0 && (
+        <div className="px-4 py-1 text-[11px] text-zinc-400 italic bg-[#0c0c0e]/40 shrink-0 flex items-center gap-1.5 animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+          <span>
+            {activeTypingCount === 1
+              ? 'Someone is typing...'
+              : 'Several people are typing...'}
+          </span>
+        </div>
+      )}
+
       <div className="relative p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 min-h-[103px] h-[103px] shrink-0 z-10">
         <div className="absolute bottom-3 left-3 right-3 rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow] z-20">
           <div className="px-3.5 pt-2.5 pb-2.5">
@@ -210,11 +267,7 @@ export function ChatArea({
               ref={textareaRef}
               rows={1}
               value={content}
-              onChange={(e) => {
-                if (e.target.value.length <= 4000) {
-                  setContent(e.target.value);
-                }
-              }}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={`Message #${channel.name}... (Press Enter to send)`}
               className="w-full resize-none bg-transparent text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none leading-5 block m-0 p-0 break-words"

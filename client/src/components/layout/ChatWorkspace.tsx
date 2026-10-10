@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { GroupRail } from './GroupRail.tsx';
 import { ChannelSidebar } from './ChannelSidebar.tsx';
 import { ChatArea } from './ChatArea.tsx';
@@ -10,6 +11,8 @@ import { DemoLoginModal } from '../modals/DemoLoginModal.tsx';
 import { useGroups, useGroup, useGroupMembers } from '../../hooks/useGroups.ts';
 import { useGroupChannels, useChannel } from '../../hooks/useChannels.ts';
 import { useChannelMessages } from '../../hooks/useMessages.ts';
+import { useAuth } from '../../hooks/useAuth.ts';
+import { useSocketStore } from '../../stores/useSocketStore.ts';
 import type { User } from '../../types/index.ts';
 
 export interface ChatWorkspaceProps {
@@ -18,6 +21,8 @@ export interface ChatWorkspaceProps {
 }
 
 export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [membersOpen, setMembersOpen] = useState(true);
@@ -48,6 +53,19 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
     data: messagesData,
     isLoading: isLoadingMessages,
   } = useChannelMessages(effectiveChannelId || undefined);
+
+  useEffect(() => {
+    if (token) {
+      useSocketStore.getState().connect(token, queryClient);
+    }
+    return () => {
+      useSocketStore.getState().disconnect();
+    };
+  }, [token, queryClient]);
+
+  useEffect(() => {
+    useSocketStore.getState().setActiveChannel(effectiveChannelId);
+  }, [effectiveChannelId]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">

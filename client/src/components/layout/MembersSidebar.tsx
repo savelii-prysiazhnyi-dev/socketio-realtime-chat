@@ -3,6 +3,7 @@ import { UserPlus, Shield, Crown } from 'lucide-react';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { Badge } from '../ui/badge.tsx';
+import { useSocketStore } from '../../stores/useSocketStore.ts';
 import type { GroupMember, Group } from '../../types/index.ts';
 
 interface MembersSidebarProps {
@@ -16,6 +17,7 @@ export function MembersSidebar({
   members,
   onOpenInvite,
 }: MembersSidebarProps) {
+  const onlineUsers = useSocketStore((state) => state.onlineUsers);
   const canInvite = group?.role === 'OWNER' || group?.role === 'ADMIN';
 
   const owners = members.filter((m) => m.role === 'OWNER');
@@ -38,17 +40,24 @@ export function MembersSidebar({
           </span>
         </div>
         <div className="space-y-0.5">
-          {list.map((m) => (
-            <div
-              key={m.userId}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-900/60 transition-colors"
-            >
-              <Avatar
-                name={m.user.name}
-                src={m.user.avatar}
-                size="sm"
-              />
-              <div className="min-w-0 flex-1">
+          {list.map((m) => {
+            const isOnline = onlineUsers.has(m.userId);
+            return (
+              <div
+                key={m.userId}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-900/60 transition-colors"
+              >
+                <div className="relative shrink-0">
+                  <Avatar
+                    name={m.user.name}
+                    src={m.user.avatar}
+                    size="sm"
+                  />
+                  {isOnline && (
+                    <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-[#111114] rounded-full" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-zinc-200 truncate">
                     {m.user.name}
@@ -70,7 +79,8 @@ export function MembersSidebar({
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
     );

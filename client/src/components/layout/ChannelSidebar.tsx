@@ -1,6 +1,7 @@
 import { Hash, Plus, ChevronDown, LogOut } from 'lucide-react';
 import { Badge } from '../ui/badge.tsx';
 import { Avatar } from '../ui/avatar.tsx';
+import { useSocketStore } from '../../stores/useSocketStore.ts';
 import type { Group, Channel, User } from '../../types/index.ts';
 
 interface ChannelSidebarProps {
@@ -24,6 +25,7 @@ export function ChannelSidebar({
   onOpenDemoLogin,
   onLogout,
 }: ChannelSidebarProps) {
+  const unreadChannelIds = useSocketStore((state) => state.unreadChannelIds);
   const canManageChannels =
     group?.role === 'OWNER' || group?.role === 'ADMIN';
 
@@ -77,23 +79,35 @@ export function ChannelSidebar({
             ) : (
               channels.map((channel) => {
                 const isActive = channel.id === activeChannelId;
+                const isUnread = !isActive && unreadChannelIds.has(channel.id);
                 return (
                   <button
                     key={channel.id}
                     type="button"
                     onClick={() => onSelectChannel(channel.id)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-left cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-left cursor-pointer ${
                       isActive
                         ? 'bg-zinc-800 text-zinc-100 border border-zinc-700/60 shadow-sm'
-                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
+                        : isUnread
+                          ? 'text-zinc-100 font-semibold hover:bg-zinc-900/60 border border-transparent'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
                     }`}
                   >
-                    <Hash
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isActive ? 'text-zinc-200' : 'text-zinc-500'
-                      }`}
-                    />
-                    <span className="truncate">{channel.name}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Hash
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          isActive
+                            ? 'text-zinc-200'
+                            : isUnread
+                              ? 'text-zinc-100'
+                              : 'text-zinc-500'
+                        }`}
+                      />
+                      <span className="truncate">{channel.name}</span>
+                    </div>
+                    {isUnread && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                    )}
                   </button>
                 );
               })
