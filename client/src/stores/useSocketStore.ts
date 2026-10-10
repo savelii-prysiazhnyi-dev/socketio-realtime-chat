@@ -153,7 +153,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       }
     });
 
-    socket.on('message:created', ({ channelId, message }: MessageCreatedPayload) => {
+    socket.on('message:created', ({ channelId, groupId, message }: MessageCreatedPayload) => {
       const timerKey = `${channelId}:${message.userId}`;
       const existingTimer = typingTimers.get(timerKey);
       if (existingTimer) {

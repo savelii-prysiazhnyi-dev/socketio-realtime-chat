@@ -4,7 +4,7 @@ import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { Badge } from '../ui/badge.tsx';
 import { useSocketStore } from '../../stores/useSocketStore.ts';
-import type { GroupMember, Group } from '../../types/index.ts';
+import type { GroupMember, Group, User } from '../../types/index.ts';
 
 interface MembersSidebarProps {
   group: Group | undefined;
