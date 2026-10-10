@@ -58,9 +58,12 @@ export function MembersSidebar({
                     src={m.user.avatar}
                     size="sm"
                   />
-                  {isOnline && (
-                    <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-[#111114] rounded-full" />
-                  )}
+                  <span
+                    className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-[#111114] ${
+                      isOnline ? 'bg-emerald-500' : 'bg-zinc-600'
+                    }`}
+                    title={isOnline ? 'Online' : 'Offline'}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
