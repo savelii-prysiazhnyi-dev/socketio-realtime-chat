@@ -6,9 +6,13 @@ import {
   createMessageSchema,
   getMessagesQuerySchema,
 } from '../common/schemas/message.schema.js';
+import type { WsEmitter } from '../ws/emitter.js';
 
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly wsEmitter: WsEmitter,
+  ) {}
 
   async listByChannel(req: Request, res: Response, next: NextFunction) {
     try {
@@ -54,6 +58,11 @@ export class MessageController {
         req.user!.id,
         content,
       );
+      this.wsEmitter.emitMessageCreated(message.groupId, {
+        channelId,
+        groupId: message.groupId,
+        message,
+      });
       res.status(201).json(message);
     } catch (err) {
       next(err);

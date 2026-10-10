@@ -6,9 +6,13 @@ import {
   createChannelSchema,
   channelIdParamsSchema,
 } from '../common/schemas/channel.schema.js';
+import type { WsEmitter } from '../ws/emitter.js';
 
 export class ChannelController {
-  constructor(private readonly channelService: ChannelService) {}
+  constructor(
+    private readonly channelService: ChannelService,
+    private readonly wsEmitter: WsEmitter,
+  ) {}
 
   async listByGroup(req: Request, res: Response, next: NextFunction) {
     try {
@@ -64,6 +68,10 @@ export class ChannelController {
         req.user!.id,
         data,
       );
+      this.wsEmitter.emitChannelCreated(groupId, {
+        groupId,
+        channel,
+      });
       res.status(201).json(channel);
     } catch (err) {
       next(err);

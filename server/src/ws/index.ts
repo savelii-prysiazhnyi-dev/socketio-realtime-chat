@@ -2,13 +2,18 @@ import type { Server, Socket } from 'socket.io';
 import { authSocketMiddleware } from './middleware/authSocket.middleware.js';
 import { groupService, presenceService } from '../services/index.js';
 import { logger } from '../utils/logger.js';
+import { wsEmitter } from './emitter.js';
 
 export const setupWebsocket = (io: Server): void => {
+  wsEmitter.init(io);
   io.use(authSocketMiddleware);
 
   io.on('connection', async (socket: Socket) => {
     const userId = socket.data.userId as string;
-    logger.info({ socketId: socket.id, userId }, 'Authenticated socket connected');
+    logger.info(
+      { socketId: socket.id, userId },
+      'Authenticated socket connected',
+    );
 
     socket.join(`user:${userId}`);
 

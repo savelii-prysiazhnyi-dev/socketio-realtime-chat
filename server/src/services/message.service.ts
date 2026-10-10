@@ -50,10 +50,15 @@ export class MessageService {
       throw new ForbiddenError("You are not a member of this channel's group");
     }
 
-    return this.messageRepository.create({
+    const message = await this.messageRepository.create({
       channelId,
       userId,
       content,
     });
+
+    return {
+      ...message,
+      groupId: channel.groupId,
+    };
   }
 }

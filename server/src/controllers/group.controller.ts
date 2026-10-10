@@ -7,9 +7,13 @@ import {
   addMemberSchema,
 } from '../common/schemas/group.schema.js';
 import { MemberRole } from '../../generated/prisma/enums.js';
+import type { WsEmitter } from '../ws/emitter.js';
 
 export class GroupController {
-  constructor(private readonly groupService: GroupService) {}
+  constructor(
+    private readonly groupService: GroupService,
+    private readonly wsEmitter: WsEmitter,
+  ) {}
 
   async list(req: Request, res: Response, next: NextFunction) {
     try {
@@ -87,6 +91,14 @@ export class GroupController {
         data.userId,
         role,
       );
+      const group = await this.groupService.getGroupById(groupId, req.user!.id);
+      this.wsEmitter.emitMemberJoined(groupId, {
+        groupId,
+        member,
+      });
+      this.wsEmitter.emitGroupInvited(data.userId, groupId, {
+        group,
+      });
       res.status(201).json(member);
     } catch (err) {
       next(err);
