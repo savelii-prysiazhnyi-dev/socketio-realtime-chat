@@ -47,6 +47,7 @@ export class GroupController {
         'Invalid group creation body',
       );
       const group = await this.groupService.createGroup(req.user!.id, data);
+      this.wsEmitter.joinUserSocketsToGroup(req.user!.id, group.id);
       res.status(201).json(group);
     } catch (err) {
       next(err);

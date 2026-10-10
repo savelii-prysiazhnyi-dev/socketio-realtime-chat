@@ -54,6 +54,9 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
     isLoading: isLoadingMessages,
   } = useChannelMessages(effectiveChannelId || undefined);
 
+  const isConnected = useSocketStore((state) => state.isConnected);
+  const joinGroup = useSocketStore((state) => state.joinGroup);
+
   useEffect(() => {
     if (token) {
       useSocketStore.getState().connect(token, queryClient);
@@ -66,6 +69,12 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   useEffect(() => {
     useSocketStore.getState().setActiveChannel(effectiveChannelId);
   }, [effectiveChannelId]);
+
+  useEffect(() => {
+    if (effectiveGroupId && isConnected) {
+      joinGroup(effectiveGroupId);
+    }
+  }, [effectiveGroupId, isConnected, joinGroup]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">

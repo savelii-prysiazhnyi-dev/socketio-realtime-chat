@@ -3,6 +3,7 @@ import { Dialog } from '../ui/dialog.tsx';
 import { Input } from '../ui/input.tsx';
 import { Button } from '../ui/button.tsx';
 import { useCreateGroup } from '../../hooks/useGroups.ts';
+import { useSocketStore } from '../../stores/useSocketStore.ts';
 
 interface CreateGroupModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ export function CreateGroupModal({
   const [error, setError] = useState<string | null>(null);
 
   const createGroupMutation = useCreateGroup();
+  const joinGroup = useSocketStore((state) => state.joinGroup);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,7 @@ export function CreateGroupModal({
     try {
       setError(null);
       const group = await createGroupMutation.mutateAsync(name.trim());
+      joinGroup(group.id);
       setName('');
       onOpenChange(false);
       onSuccess?.(group.id);

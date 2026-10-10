@@ -52,6 +52,7 @@ interface SocketState {
   markChannelAsRead: (channelId: string) => void;
   sendTypingStart: (groupId: string, channelId: string) => void;
   sendTypingStop: (groupId: string, channelId: string) => void;
+  joinGroup: (groupId: string) => void;
 }
 
 const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -261,5 +262,12 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
   sendTypingStop: (groupId: string, channelId: string) => {
     get().socket?.emit('typing:stop', { groupId, channelId });
+  },
+
+  joinGroup: (groupId: string) => {
+    const { socket, isConnected } = get();
+    if (socket && isConnected) {
+      socket.emit('group:join', { groupId });
+    }
   },
 }));

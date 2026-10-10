@@ -40,6 +40,10 @@ export class WsEmitter {
     this.io?.in(`user:${userId}`).socketsJoin(`group:${groupId}`);
     this.io?.to(`user:${userId}`).emit('group:invited', payload);
   }
+
+  joinUserSocketsToGroup(userId: string, groupId: string): void {
+    this.io?.in(`user:${userId}`).socketsJoin(`group:${groupId}`);
+  }
 }
 
 export const wsEmitter = new WsEmitter();
