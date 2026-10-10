@@ -122,8 +122,8 @@ export function ChatArea({
         scrollContainerRef.current.scrollTop += diff;
       }
       scrollHeightBeforeLoadRef.current = null;
-    } else if (messages.length > prevMessagesLengthRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } else if (prevMessagesLengthRef.current === 0 && messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView();
     }
     prevMessagesLengthRef.current = messages.length;
   }, [messages.length]);
@@ -191,6 +191,7 @@ export function ChatArea({
         textareaRef.current.style.height = '20px';
         textareaRef.current.style.overflowY = 'hidden';
       }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch {
       return;
     }
