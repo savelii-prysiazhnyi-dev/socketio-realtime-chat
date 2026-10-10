@@ -13,6 +13,7 @@ import {
   Users as UsersIcon,
   RotateCw,
   MessageSquare,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
@@ -84,6 +85,18 @@ export function ChatArea({
 
   const sendMessageMutation = useSendMessage(channel?.id);
 
+  const sendErrorMessage = useMemo(() => {
+    if (!sendMessageMutation.isError) return null;
+    const error = sendMessageMutation.error as {
+      response?: { data?: { message?: string } };
+    };
+    return (
+      error.response?.data?.message ||
+      sendMessageMutation.error.message ||
+      'Failed to send message'
+    );
+  }, [sendMessageMutation.isError, sendMessageMutation.error]);
+
   const messages = messagesData?.messages || [];
 
   useEffect(() => {
@@ -115,6 +128,9 @@ export function ChatArea({
   }, [content, adjustTextareaHeight]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (sendMessageMutation.isError) {
+      sendMessageMutation.reset();
+    }
     if (e.target.value.length <= 4000) {
       setContent(e.target.value);
     }
@@ -150,8 +166,8 @@ export function ChatArea({
         textareaRef.current.style.height = '20px';
         textareaRef.current.style.overflowY = 'hidden';
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      return;
     }
   };
 
@@ -298,6 +314,21 @@ export function ChatArea({
       )}
 
       <div className="p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 shrink-0">
+        {sendErrorMessage && (
+          <div className="mb-2 px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-1.5 truncate">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{sendErrorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => sendMessageMutation.reset()}
+              className="text-rose-400 hover:text-rose-300 text-[11px] underline ml-2 shrink-0 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow]">
           <div className="px-3.5 pt-2.5 pb-2.5">
             <textarea
