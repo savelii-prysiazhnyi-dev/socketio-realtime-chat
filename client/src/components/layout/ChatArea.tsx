@@ -98,9 +98,34 @@ export function ChatArea({
   }, [sendMessageMutation.isError, sendMessageMutation.error]);
 
   const messages = messagesData?.messages || [];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollHeightBeforeLoadRef = useRef<number | null>(null);
+  const prevMessagesLengthRef = useRef<number>(0);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleLoadOlder = () => {
+    if (scrollContainerRef.current) {
+      scrollHeightBeforeLoadRef.current =
+        scrollContainerRef.current.scrollHeight;
+    }
+    onLoadOlder?.();
+  };
+
+  useLayoutEffect(() => {
+    if (
+      scrollHeightBeforeLoadRef.current !== null &&
+      scrollContainerRef.current
+    ) {
+      const diff =
+        scrollContainerRef.current.scrollHeight -
+        scrollHeightBeforeLoadRef.current;
+      if (diff > 0) {
+        scrollContainerRef.current.scrollTop += diff;
+      }
+      scrollHeightBeforeLoadRef.current = null;
+    } else if (messages.length > prevMessagesLengthRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages.length]);
 
   useEffect(() => {
@@ -229,13 +254,16 @@ export function ChatArea({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+      >
         {hasOlder && (
           <div className="flex justify-center pb-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={onLoadOlder}
+              onClick={handleLoadOlder}
               disabled={isLoadingOlder}
               className="text-xs gap-1.5"
             >

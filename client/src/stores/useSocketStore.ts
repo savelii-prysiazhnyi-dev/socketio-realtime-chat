@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { io, type Socket } from 'socket.io-client';
-import type { QueryClient } from '@tanstack/react-query';
+import type { QueryClient, InfiniteData } from '@tanstack/react-query';
 import { MESSAGE_KEYS } from '../hooks/useMessages.ts';
 import { CHANNEL_KEYS } from '../hooks/useChannels.ts';
 import { GROUP_KEYS } from '../hooks/useGroups.ts';
@@ -173,23 +173,41 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         return state;
       });
 
-      const updateMessages = (
-        old: MessagesResponse | undefined,
-      ): MessagesResponse | undefined => {
-        if (!old) return old;
-        const exists = old.messages.some((m) => m.id === message.id);
-        if (exists) return old;
+      const updateMessages = (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        if ('pages' in old && Array.isArray((old as { pages: unknown[] }).pages)) {
+          const inf = old as InfiniteData<MessagesResponse>;
+          if (
+            inf.pages.some((page) =>
+              page.messages.some((m) => m.id === message.id),
+            )
+          ) {
+            return inf;
+          }
+          const updatedPages = [...inf.pages];
+          const firstPage = updatedPages[0];
+          updatedPages[0] = {
+            ...firstPage,
+            messages: [...firstPage.messages, message],
+          };
+          return {
+            ...inf,
+            pages: updatedPages,
+          };
+        }
+        const regular = old as MessagesResponse;
+        if (regular.messages?.some((m) => m.id === message.id)) return regular;
         return {
-          ...old,
-          messages: [...old.messages, message],
+          ...regular,
+          messages: [...(regular.messages || []), message],
         };
       };
 
-      queryClient.setQueriesData<MessagesResponse>(
+      queryClient.setQueriesData(
         { queryKey: ['messages', channelId] },
         updateMessages,
       );
-      queryClient.setQueryData<MessagesResponse>(
+      queryClient.setQueryData(
         MESSAGE_KEYS.byChannel(channelId),
         updateMessages,
       );

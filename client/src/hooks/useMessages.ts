@@ -1,19 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import { getChannelMessages, sendMessage } from '../api/messages.api.ts';
 import type { Message, MessagesResponse } from '../types/index.ts';
 
 export const MESSAGE_KEYS = {
-  byChannel: (channelId: string, cursor?: string) =>
-    ['messages', channelId, cursor ?? 'latest'] as const,
+  byChannel: (channelId: string) => ['messages', channelId] as const,
 };
 
-export function useChannelMessages(
-  channelId: string | undefined,
-  cursor?: string,
-) {
-  return useQuery<MessagesResponse>({
-    queryKey: MESSAGE_KEYS.byChannel(channelId ?? '', cursor),
-    queryFn: () => getChannelMessages(channelId!, 50, cursor),
+export function useChannelMessages(channelId: string | undefined) {
+  return useInfiniteQuery<MessagesResponse>({
+    queryKey: MESSAGE_KEYS.byChannel(channelId ?? ''),
+    queryFn: ({ pageParam }) =>
+      getChannelMessages(channelId!, 50, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: Boolean(channelId),
   });
 }
@@ -25,14 +29,26 @@ export function useSendMessage(channelId: string | undefined) {
     mutationFn: (content: string) => sendMessage(channelId!, content),
     onSuccess: (message) => {
       if (!channelId) return;
-      queryClient.setQueriesData<MessagesResponse>(
-        { queryKey: ['messages', channelId] },
+      queryClient.setQueriesData<InfiniteData<MessagesResponse>>(
+        { queryKey: MESSAGE_KEYS.byChannel(channelId) },
         (old) => {
           if (!old) return old;
-          if (old.messages.some((m) => m.id === message.id)) return old;
+          if (
+            old.pages.some((page) =>
+              page.messages.some((m) => m.id === message.id),
+            )
+          ) {
+            return old;
+          }
+          const updatedPages = [...old.pages];
+          const firstPage = updatedPages[0];
+          updatedPages[0] = {
+            ...firstPage,
+            messages: [...firstPage.messages, message],
+          };
           return {
             ...old,
-            messages: [...old.messages, message],
+            pages: updatedPages,
           };
         },
       );

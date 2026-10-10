@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { GroupRail } from './GroupRail.tsx';
 import { ChannelSidebar } from './ChannelSidebar.tsx';
@@ -54,7 +54,24 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   const {
     data: messagesData,
     isLoading: isLoadingMessages,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
   } = useChannelMessages(effectiveChannelId || undefined);
+
+  const flatMessages = useMemo(() => {
+    const pages = messagesData?.pages;
+    if (!pages) return [];
+    return pages
+      .slice()
+      .reverse()
+      .flatMap((page) => page.messages);
+  }, [messagesData]);
+
+  const chatMessagesData = useMemo(
+    () => ({ messages: flatMessages }),
+    [flatMessages],
+  );
 
   const isConnected = useSocketStore((state) => state.isConnected);
   const joinGroup = useSocketStore((state) => state.joinGroup);
@@ -106,8 +123,11 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
       <ChatArea
         key={effectiveChannelId ?? 'none'}
         channel={resolvedChannel}
-        messagesData={messagesData}
+        messagesData={chatMessagesData}
         isLoadingMessages={isLoadingMessages}
+        onLoadOlder={() => void fetchNextPage()}
+        isLoadingOlder={isFetchingNextPage}
+        hasOlder={Boolean(hasNextPage)}
         onToggleMembers={() => setMembersOpen((prev) => !prev)}
         membersOpen={membersOpen}
         currentUser={currentUser}
