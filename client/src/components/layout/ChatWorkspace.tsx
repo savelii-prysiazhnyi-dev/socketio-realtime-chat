@@ -48,6 +48,8 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
       : channels[0]?.id ?? null;
 
   const { data: activeChannel } = useChannel(effectiveChannelId || undefined);
+  const resolvedChannel =
+    channels.find((c) => c.id === effectiveChannelId) ?? activeChannel;
 
   const {
     data: messagesData,
@@ -103,7 +105,7 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
 
       <ChatArea
         key={effectiveChannelId ?? 'none'}
-        channel={activeChannel}
+        channel={resolvedChannel}
         messagesData={messagesData}
         isLoadingMessages={isLoadingMessages}
         onToggleMembers={() => setMembersOpen((prev) => !prev)}
