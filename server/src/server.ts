@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import buildApp from './app.js';
 import { logger } from './utils/logger.js';
 import { getCorsSettings } from './utils/cors.js';
+import { getJwtSecret } from './utils/jwt.js';
 import { prisma } from './utils/prisma.js';
 import { setupWebsocket } from './ws/index.js';
 
@@ -21,6 +22,7 @@ setupWebsocket(io);
 
 const start = async (): Promise<void> => {
   try {
+    getJwtSecret();
     await prisma.$connect();
     logger.info('Database connected successfully');
 
