@@ -57,6 +57,7 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   const isConnected = useSocketStore((state) => state.isConnected);
   const joinGroup = useSocketStore((state) => state.joinGroup);
 
+
   useEffect(() => {
     if (token) {
       useSocketStore.getState().connect(token, queryClient);

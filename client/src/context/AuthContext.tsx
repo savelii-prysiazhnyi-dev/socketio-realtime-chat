@@ -23,6 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(res.token);
       setTokenState(res.token);
       setCurrentUser(res.user);
+      queryClient.removeQueries({ queryKey: ['groups'] });
+      queryClient.removeQueries({ queryKey: ['channels'] });
+      queryClient.removeQueries({ queryKey: ['messages'] });
       queryClient.setQueryData(['currentUser'], res.user);
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     } catch (err: unknown) {

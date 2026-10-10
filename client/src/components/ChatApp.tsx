@@ -20,5 +20,11 @@ export function ChatApp() {
     );
   }
 
-  return <ChatWorkspace currentUser={currentUser} onLogout={logout} />;
+  return (
+    <ChatWorkspace
+      key={currentUser.id}
+      currentUser={currentUser}
+      onLogout={logout}
+    />
+  );
 }
