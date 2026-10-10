@@ -87,6 +87,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         });
       }
       void queryClient.invalidateQueries({ queryKey: GROUP_KEYS.all });
+      void queryClient.invalidateQueries({ queryKey: ['channels'] });
     });
 
     socket.on('disconnect', () => {
