@@ -265,6 +265,9 @@ importers:
       pino-pretty:
         specifier: ^13.2.0
         version: 13.2.0
+      prettier:
+        specifier: ^3.9.9
+        version: 3.9.9
       prisma:
         specifier: ^7.10.0
         version: 7.10.0(@types/react@19.3.0)(better-sqlite3@13.0.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
@@ -2795,6 +2798,14 @@ packages:
     deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
+  prettier@3.9.9:
+    resolution:
+      {
+        integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==,
+      }
+    engines: { node: '>=14' }
+    hasBin: true
+
   prisma@7.10.0:
     resolution:
       {
@@ -4801,6 +4812,8 @@ snapshots:
       simple-get: 4.0.1
       tar-fs: 2.1.5
       tunnel-agent: 0.6.0
+
+  prettier@3.9.9: {}
 
   prisma@7.10.0(@types/react@19.3.0)(better-sqlite3@13.0.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2):
     dependencies:
