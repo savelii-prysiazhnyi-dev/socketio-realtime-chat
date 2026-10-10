@@ -151,6 +151,25 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     socket.on('message:created', ({ channelId, message }: MessageCreatedPayload) => {
+      const timerKey = `${channelId}:${message.userId}`;
+      const existingTimer = typingTimers.get(timerKey);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        typingTimers.delete(timerKey);
+      }
+
+      set((state) => {
+        const current = state.typingUsers[channelId];
+        if (current && current.has(message.userId)) {
+          const next = new Set(current);
+          next.delete(message.userId);
+          return {
+            typingUsers: { ...state.typingUsers, [channelId]: next },
+          };
+        }
+        return state;
+      });
+
       const updateMessages = (
         old: MessagesResponse | undefined,
       ): MessagesResponse | undefined => {

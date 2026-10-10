@@ -4,6 +4,7 @@ import {
   useEffect,
   useCallback,
   useLayoutEffect,
+  useMemo,
   type KeyboardEvent,
 } from 'react';
 import {
@@ -17,7 +18,13 @@ import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { useSendMessage } from '../../hooks/useMessages.ts';
 import { useSocketStore } from '../../stores/useSocketStore.ts';
-import type { Channel, Message, MessagesResponse, User } from '../../types/index.ts';
+import type {
+  Channel,
+  Message,
+  MessagesResponse,
+  User,
+  GroupMember,
+} from '../../types/index.ts';
 
 interface ChatAreaProps {
   channel: Channel | undefined;
@@ -29,6 +36,7 @@ interface ChatAreaProps {
   onToggleMembers: () => void;
   membersOpen: boolean;
   currentUser?: User | null;
+  members?: GroupMember[];
 }
 
 export function ChatArea({
@@ -41,6 +49,7 @@ export function ChatArea({
   onToggleMembers,
   membersOpen,
   currentUser,
+  members,
 }: ChatAreaProps) {
   const [content, setContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -55,8 +64,23 @@ export function ChatArea({
   );
   const sendTypingStart = useSocketStore((state) => state.sendTypingStart);
   const sendTypingStop = useSocketStore((state) => state.sendTypingStop);
+  const activeTypingUserIds = useMemo(() => {
+    if (!typingUserIds) return [];
+    return Array.from(typingUserIds).filter((id) => id !== currentUser?.id);
+  }, [typingUserIds, currentUser?.id]);
 
-  const activeTypingCount = typingUserIds?.size ?? 0;
+  const typingText = useMemo(() => {
+    if (activeTypingUserIds.length === 0) return null;
+    const memberMap = new Map((members ?? []).map((m) => [m.userId, m.user.name]));
+    const names = activeTypingUserIds.map((id) => memberMap.get(id) || 'Someone');
+    if (names.length === 1) {
+      return `${names[0]} is typing...`;
+    }
+    if (names.length === 2) {
+      return `${names[0]} and ${names[1]} are typing...`;
+    }
+    return 'Several people are typing...';
+  }, [activeTypingUserIds, members]);
 
   const sendMessageMutation = useSendMessage(channel?.id);
 
@@ -266,14 +290,10 @@ export function ChatArea({
         <div ref={messagesEndRef} />
       </div>
 
-      {activeTypingCount > 0 && (
+      {typingText && (
         <div className="px-4 py-1 text-[11px] text-zinc-400 italic bg-[#0c0c0e]/40 shrink-0 flex items-center gap-1.5 animate-pulse">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-          <span>
-            {activeTypingCount === 1
-              ? 'Someone is typing...'
-              : 'Several people are typing...'}
-          </span>
+          <span>{typingText}</span>
         </div>
       )}
 

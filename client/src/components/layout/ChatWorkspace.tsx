@@ -108,6 +108,7 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
         onToggleMembers={() => setMembersOpen((prev) => !prev)}
         membersOpen={membersOpen}
         currentUser={currentUser}
+        members={members}
       />
 
       {membersOpen && effectiveGroupId && (
