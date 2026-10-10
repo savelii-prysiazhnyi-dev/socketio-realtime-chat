@@ -42,7 +42,12 @@ export function useCreateGroup() {
 
   return useMutation<Group, Error, string>({
     mutationFn: (name: string) => createGroup(name),
-    onSuccess: () => {
+    onSuccess: (newGroup) => {
+      queryClient.setQueryData<Group[]>(GROUP_KEYS.all, (old) => {
+        if (!old) return [newGroup];
+        if (old.some((g) => g.id === newGroup.id)) return old;
+        return [...old, newGroup];
+      });
       queryClient.invalidateQueries({ queryKey: GROUP_KEYS.all });
     },
   });

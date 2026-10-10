@@ -34,7 +34,7 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
 
   const { data: groups = [] } = useGroups();
   const effectiveGroupId =
-    activeGroupId && groups.some((g) => g.id === activeGroupId)
+    activeGroupId && (groups.length === 0 || groups.some((g) => g.id === activeGroupId))
       ? activeGroupId
       : groups[0]?.id ?? null;
 
@@ -43,7 +43,7 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   const { data: channels = [] } = useGroupChannels(effectiveGroupId || undefined);
 
   const effectiveChannelId =
-    activeChannelId && channels.some((c) => c.id === activeChannelId)
+    activeChannelId && (channels.length === 0 || channels.some((c) => c.id === activeChannelId))
       ? activeChannelId
       : channels[0]?.id ?? null;
 

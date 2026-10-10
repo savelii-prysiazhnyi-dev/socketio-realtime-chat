@@ -32,8 +32,16 @@ export function useCreateChannel(groupId: string | undefined) {
 
   return useMutation<Channel, Error, { name: string; topic?: string }>({
     mutationFn: ({ name, topic }) => createChannel(groupId!, name, topic),
-    onSuccess: () => {
+    onSuccess: (newChannel) => {
       if (groupId) {
+        queryClient.setQueryData<Channel[]>(
+          CHANNEL_KEYS.byGroup(groupId),
+          (old) => {
+            if (!old) return [newChannel];
+            if (old.some((c) => c.id === newChannel.id)) return old;
+            return [...old, newChannel];
+          },
+        );
         queryClient.invalidateQueries({
           queryKey: CHANNEL_KEYS.byGroup(groupId),
         });
