@@ -3,14 +3,16 @@ import { authSocketMiddleware } from './middleware/authSocket.middleware.js';
 import { groupService, presenceService } from '../services/index.js';
 import { logger } from '../utils/logger.js';
 import { wsEmitter } from './emitter.js';
-import { groupRoomPayloadSchema, typingPayloadSchema } from './schemas.js';
-import { validateSocketPayload } from '../utils/validateSocketPayload.js';
+import {
+  registerGroupHandlers,
+  registerTypingHandlers,
+} from './handlers/index.js';
 
 export const setupWebsocket = (io: Server): void => {
   wsEmitter.init(io);
   io.use(authSocketMiddleware);
 
-  io.on('connection', async (socket: Socket) => {
+  const onConnection = async (socket: Socket) => {
     const userId = socket.data.userId as string;
     logger.info(
       { socketId: socket.id, userId },
@@ -19,12 +21,14 @@ export const setupWebsocket = (io: Server): void => {
 
     socket.join(`user:${userId}`);
 
-    let userGroupIds: string[] = [];
+    const userGroupIds = new Set<string>();
+    socket.data.userGroupIds = userGroupIds;
+
     try {
       const userGroups = await groupService.getUserGroups(userId);
-      userGroupIds = userGroups.map(group => group.id);
-      for (const groupId of userGroupIds) {
-        socket.join(`group:${groupId}`);
+      for (const group of userGroups) {
+        userGroupIds.add(group.id);
+        socket.join(`group:${group.id}`);
       }
     } catch (err) {
       logger.error({ err, userId }, 'Failed to join group rooms on connection');
@@ -42,55 +46,8 @@ export const setupWebsocket = (io: Server): void => {
 
     logger.info({ userId, socketId: socket.id }, 'User connected to socket');
 
-    socket.on('group:join', async (data: unknown) => {
-      const payload = validateSocketPayload(groupRoomPayloadSchema, data);
-      if (!payload) {
-        socket.emit('error', { message: 'Invalid group:join payload' });
-        return;
-      }
-
-      try {
-        await groupService.getGroupById(payload.groupId, userId);
-        socket.join(`group:${payload.groupId}`);
-        if (!userGroupIds.includes(payload.groupId)) {
-          userGroupIds.push(payload.groupId);
-        }
-      } catch {
-        socket.emit('error', { message: 'Unauthorized or group not found' });
-      }
-    });
-
-    socket.on('group:leave', (data: unknown) => {
-      const payload = validateSocketPayload(groupRoomPayloadSchema, data);
-      if (!payload) return;
-
-      socket.leave(`group:${payload.groupId}`);
-      userGroupIds = userGroupIds.filter(id => id !== payload.groupId);
-    });
-
-    socket.on('typing:start', (data: unknown) => {
-      const payload = validateSocketPayload(typingPayloadSchema, data);
-      if (!payload || !socket.rooms.has(`group:${payload.groupId}`)) return;
-
-      socket.to(`group:${payload.groupId}`).emit('user:typing', {
-        groupId: payload.groupId,
-        channelId: payload.channelId,
-        userId,
-        isTyping: true,
-      });
-    });
-
-    socket.on('typing:stop', (data: unknown) => {
-      const payload = validateSocketPayload(typingPayloadSchema, data);
-      if (!payload || !socket.rooms.has(`group:${payload.groupId}`)) return;
-
-      socket.to(`group:${payload.groupId}`).emit('user:typing', {
-        groupId: payload.groupId,
-        channelId: payload.channelId,
-        userId,
-        isTyping: false,
-      });
-    });
+    registerGroupHandlers(io, socket);
+    registerTypingHandlers(io, socket);
 
     socket.on('disconnect', () => {
       const isLastConnection = presenceService.untrack(userId, socket.id);
@@ -107,5 +64,7 @@ export const setupWebsocket = (io: Server): void => {
         'User disconnected from socket',
       );
     });
-  });
+  };
+
+  io.on('connection', onConnection);
 };
