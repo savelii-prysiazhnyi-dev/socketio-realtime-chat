@@ -44,6 +44,7 @@ interface SocketState {
   onlineUsers: Set<string>;
   typingUsers: Record<string, Set<string>>;
   unreadChannelIds: Set<string>;
+  unreadGroupChannels: Record<string, Set<string>>;
   activeChannelId: string | null;
 
   connect: (token: string, queryClient: QueryClient) => void;
@@ -63,6 +64,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   onlineUsers: new Set(),
   typingUsers: {},
   unreadChannelIds: new Set(),
+  unreadGroupChannels: {},
   activeChannelId: null,
 
   connect: (token: string, queryClient: QueryClient) => {
@@ -194,9 +196,20 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
       if (get().activeChannelId !== channelId) {
         set((state) => {
-          const next = new Set(state.unreadChannelIds);
-          next.add(channelId);
-          return { unreadChannelIds: next };
+          const nextChannelIds = new Set(state.unreadChannelIds);
+          nextChannelIds.add(channelId);
+
+          const currentGroupSet = state.unreadGroupChannels[groupId];
+          const nextGroupSet = new Set(currentGroupSet ? currentGroupSet : []);
+          nextGroupSet.add(channelId);
+
+          return {
+            unreadChannelIds: nextChannelIds,
+            unreadGroupChannels: {
+              ...state.unreadGroupChannels,
+              [groupId]: nextGroupSet,
+            },
+          };
         });
       }
     });
@@ -263,26 +276,58 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       onlineUsers: new Set(),
       typingUsers: {},
       unreadChannelIds: new Set(),
+      unreadGroupChannels: {},
       activeChannelId: null,
     });
   },
 
   setActiveChannel: (channelId: string | null) => {
     set((state) => {
-      const next = new Set(state.unreadChannelIds);
+      const nextUnreadChannels = new Set(state.unreadChannelIds);
       if (channelId) {
-        next.delete(channelId);
+        nextUnreadChannels.delete(channelId);
       }
-      return { activeChannelId: channelId, unreadChannelIds: next };
+      const nextGroupChannels: Record<string, Set<string>> = {};
+      for (const [gId, channels] of Object.entries(state.unreadGroupChannels)) {
+        if (channelId && channels.has(channelId)) {
+          const nextSet = new Set(channels);
+          nextSet.delete(channelId);
+          if (nextSet.size > 0) {
+            nextGroupChannels[gId] = nextSet;
+          }
+        } else if (channels.size > 0) {
+          nextGroupChannels[gId] = channels;
+        }
+      }
+      return {
+        activeChannelId: channelId,
+        unreadChannelIds: nextUnreadChannels,
+        unreadGroupChannels: nextGroupChannels,
+      };
     });
   },
 
   markChannelAsRead: (channelId: string) => {
     set((state) => {
       if (!state.unreadChannelIds.has(channelId)) return state;
-      const next = new Set(state.unreadChannelIds);
-      next.delete(channelId);
-      return { unreadChannelIds: next };
+      const nextUnreadChannels = new Set(state.unreadChannelIds);
+      nextUnreadChannels.delete(channelId);
+      const nextGroupChannels: Record<string, Set<string>> = {};
+      for (const [gId, channels] of Object.entries(state.unreadGroupChannels)) {
+        if (channels.has(channelId)) {
+          const nextSet = new Set(channels);
+          nextSet.delete(channelId);
+          if (nextSet.size > 0) {
+            nextGroupChannels[gId] = nextSet;
+          }
+        } else if (channels.size > 0) {
+          nextGroupChannels[gId] = channels;
+        }
+      }
+      return {
+        unreadChannelIds: nextUnreadChannels,
+        unreadGroupChannels: nextGroupChannels,
+      };
     });
   },
 
