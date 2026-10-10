@@ -45,6 +45,10 @@ export const setupWebsocket = (io: Server): void => {
       }
     }
 
+    socket.emit('presence:sync', {
+      userIds: presenceService.getOnlineUsers(),
+    });
+
     logger.info({ userId, socketId: socket.id }, 'User connected to socket');
 
     registerGroupHandlers(io, socket);

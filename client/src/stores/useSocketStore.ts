@@ -90,7 +90,17 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     socket.on('disconnect', () => {
-      set({ isConnected: false });
+      set({ isConnected: false, onlineUsers: new Set() });
+    });
+
+    socket.on('presence:sync', ({ userIds }: { userIds: string[] }) => {
+      set((state) => {
+        const next = new Set(state.onlineUsers);
+        for (const id of userIds) {
+          next.add(id);
+        }
+        return { onlineUsers: next };
+      });
     });
 
     socket.on('user:presence', ({ userId, status }: PresencePayload) => {

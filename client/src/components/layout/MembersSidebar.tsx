@@ -9,15 +9,18 @@ import type { GroupMember, Group } from '../../types/index.ts';
 interface MembersSidebarProps {
   group: Group | undefined;
   members: GroupMember[];
+  currentUser?: User | null;
   onOpenInvite: () => void;
 }
 
 export function MembersSidebar({
   group,
   members,
+  currentUser,
   onOpenInvite,
 }: MembersSidebarProps) {
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
+  const isConnected = useSocketStore((state) => state.isConnected);
   const canInvite = group?.role === 'OWNER' || group?.role === 'ADMIN';
 
   const owners = members.filter((m) => m.role === 'OWNER');
@@ -41,7 +44,9 @@ export function MembersSidebar({
         </div>
         <div className="space-y-0.5">
           {list.map((m) => {
-            const isOnline = onlineUsers.has(m.userId);
+            const isOnline =
+              onlineUsers.has(m.userId) ||
+              (m.userId === currentUser?.id && isConnected);
             return (
               <div
                 key={m.userId}

@@ -26,6 +26,7 @@ export function ChannelSidebar({
   onLogout,
 }: ChannelSidebarProps) {
   const unreadChannelIds = useSocketStore((state) => state.unreadChannelIds);
+  const isConnected = useSocketStore((state) => state.isConnected);
   const canManageChannels =
     group?.role === 'OWNER' || group?.role === 'ADMIN';
 
@@ -137,7 +138,11 @@ export function ChannelSidebar({
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <div
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                isConnected ? 'bg-emerald-500' : 'bg-zinc-500'
+              }`}
+            />
             {onLogout && (
               <button
                 type="button"

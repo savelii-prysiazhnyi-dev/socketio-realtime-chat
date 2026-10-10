@@ -107,12 +107,14 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
         isLoadingMessages={isLoadingMessages}
         onToggleMembers={() => setMembersOpen((prev) => !prev)}
         membersOpen={membersOpen}
+        currentUser={currentUser}
       />
 
       {membersOpen && effectiveGroupId && (
         <MembersSidebar
           group={activeGroup}
           members={members}
+          currentUser={currentUser}
           onOpenInvite={() => setInviteMemberOpen(true)}
         />
       )}

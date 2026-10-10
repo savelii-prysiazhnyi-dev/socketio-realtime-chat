@@ -17,7 +17,7 @@ import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { useSendMessage } from '../../hooks/useMessages.ts';
 import { useSocketStore } from '../../stores/useSocketStore.ts';
-import type { Channel, Message, MessagesResponse } from '../../types/index.ts';
+import type { Channel, Message, MessagesResponse, User } from '../../types/index.ts';
 
 interface ChatAreaProps {
   channel: Channel | undefined;
@@ -28,6 +28,7 @@ interface ChatAreaProps {
   hasOlder?: boolean;
   onToggleMembers: () => void;
   membersOpen: boolean;
+  currentUser?: User | null;
 }
 
 export function ChatArea({
@@ -39,6 +40,7 @@ export function ChatArea({
   hasOlder,
   onToggleMembers,
   membersOpen,
+  currentUser,
 }: ChatAreaProps) {
   const [content, setContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,8 @@ export function ChatArea({
   const lastTypingSentRef = useRef<number>(0);
   const typingInactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const onlineUsers = useSocketStore((state) => state.onlineUsers);
+  const isConnected = useSocketStore((state) => state.isConnected);
   const typingUserIds = useSocketStore((state) =>
     channel ? state.typingUsers[channel.id] : undefined,
   );
@@ -220,16 +224,28 @@ export function ChatArea({
             </p>
           </div>
         ) : (
-          messages.map((message: Message) => (
-            <div
-              key={message.id}
-              className="group flex gap-3 text-xs leading-relaxed hover:bg-zinc-900/30 -mx-2 px-2 py-1.5 rounded transition-colors"
-            >
-              <Avatar
-                name={message.user.name}
-                src={message.user.avatar}
-                size="md"
-              />
+          messages.map((message: Message) => {
+            const isAuthorOnline =
+              onlineUsers.has(message.userId) ||
+              (message.userId === currentUser?.id && isConnected);
+            return (
+              <div
+                key={message.id}
+                className="group flex gap-3 text-xs leading-relaxed hover:bg-zinc-900/30 -mx-2 px-2 py-1.5 rounded transition-colors"
+              >
+                <div className="relative shrink-0 self-start">
+                  <Avatar
+                    name={message.user.name}
+                    src={message.user.avatar}
+                    size="md"
+                  />
+                  <span
+                    className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-[#09090b] ${
+                      isAuthorOnline ? 'bg-emerald-500' : 'bg-zinc-600'
+                    }`}
+                    title={isAuthorOnline ? 'Online' : 'Offline'}
+                  />
+                </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
                   <span className="font-semibold text-zinc-200">
@@ -244,7 +260,8 @@ export function ChatArea({
                 </div>
               </div>
             </div>
-          ))
+          );
+        })
         )}
         <div ref={messagesEndRef} />
       </div>
