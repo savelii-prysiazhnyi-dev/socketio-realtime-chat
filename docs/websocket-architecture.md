@@ -10,7 +10,7 @@ This document outlines the real-time architecture, room scoping, connection life
 - **Authentication**: JWT token validated at connection handshake via `authSocketMiddleware`.
 - **Hybrid Write/Broadcast Pattern**:
   - **Writes** (e.g. posting messages, creating channels) are processed through REST API endpoints for validation, persistence, and HTTP status codes.
-  - **Broadcasts** (e.g. new messages, presence updates, channel creation) are fanned out in real-time over Socket.IO rooms.
+  - **Broadcasts** (e.g. new messages, presence updates, channel creation) are fanned out in real-time over Socket.IO rooms using the constructor-injected `WsEmitter` singleton.
 
 ---
 
@@ -25,7 +25,7 @@ Socket.IO Server
 │
 └── group:<groupId>        [Workspace Room]
     └── Scope: All active members within a specific group workspace.
-    └── Joined upon client 'group:join' request after server-side membership authorization.
+    └── Auto-joined on connection for all user workspaces; dynamically updated on join/leave.
     └── Used for:
         ├── Channel creation events
         ├── Member join events
@@ -37,14 +37,16 @@ Socket.IO Server
 
 ## 3. Event Hierarchy & Schemas
 
+Inbound socket event payloads are validated using Zod schemas (`src/ws/schemas.ts`) via the pure `validateSocketPayload` utility. Malformed payloads are rejected immediately before touching database or room state.
+
 ### 3.1 Client to Server (Inbound)
 
 | Event | Payload | Description |
 | :--- | :--- | :--- |
-| `group:join` | `{ groupId: string }` | Requests to join a workspace room. Server validates membership via `groupService` before calling `socket.join()`. |
-| `group:leave` | `{ groupId: string }` | Leaves a workspace room. Calls `socket.leave()`. |
-| `typing:start` | `{ groupId: string, channelId: string }` | Client started typing in a channel. Throttled on the client. |
-| `typing:stop` | `{ groupId: string, channelId: string }` | Client stopped typing in a channel or submitted the message. |
+| `group:join` | `{ groupId: UUID }` | Requests to join a workspace room. Server validates membership via `groupService` before calling `socket.join()`. |
+| `group:leave` | `{ groupId: UUID }` | Leaves a workspace room. Calls `socket.leave()`. |
+| `typing:start` | `{ groupId: UUID, channelId: UUID }` | Client started typing in a channel. Throttled on the client; room membership verified in memory. |
+| `typing:stop` | `{ groupId: UUID, channelId: UUID }` | Client stopped typing in a channel or submitted the message. |
 
 #### Payload Examples
 ```json
@@ -68,7 +70,7 @@ Socket.IO Server
 
 | Event | Target Room | Payload | Description |
 | :--- | :--- | :--- | :--- |
-| `message:created` | `group:<groupId>` | `{ channelId: string, message: Message }` | Broadcast when a new message is posted to any channel in the workspace. |
+| `message:created` | `group:<groupId>` | `{ channelId: string, groupId: string, message: Message }` | Broadcast when a new message is posted to any channel in the workspace. |
 | `channel:created` | `group:<groupId>` | `{ groupId: string, channel: Channel }` | Broadcast when a new channel is created in the workspace. |
 | `member:joined` | `group:<groupId>` | `{ groupId: string, member: GroupMember }` | Broadcast when a new user joins or is invited to the workspace. |
 | `user:presence` | `group:<groupId>` | `{ userId: string, status: "ONLINE" \| "OFFLINE" }` | Broadcast when a member's global connection state transitions between online and offline. |
@@ -198,8 +200,9 @@ Typing indicators are high-frequency, ephemeral events that do not touch the dat
 4. **Immediate Submit Dismissal**:
    - When the user presses `Enter` or clicks "Send", cancel the inactivity timer and immediately emit `typing:stop` (or let the incoming `message:created` event dismiss it).
 
-### 5.2 Server Relay (Sender Exclusion)
-- The server validates that the socket is a member of the group.
+### 5.2 Server Relay (In-Memory Room Guard & Sender Exclusion)
+- Payload format `{ groupId, channelId }` is strictly validated with Zod (`typingPayloadSchema`).
+- The server checks room authorization in memory via `socket.rooms.has("group:" + groupId)`. If the socket is not an active member of that room, the event is immediately discarded without querying the database.
 - Emits to the room using `socket.to("group:" + groupId)` so the **originating sender is excluded**:
   ```ts
   socket.to(`group:${groupId}`).emit('user:typing', {
