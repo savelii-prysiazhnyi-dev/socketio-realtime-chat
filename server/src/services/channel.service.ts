@@ -7,6 +7,7 @@ import {
   ConflictError,
 } from '../common/errors/httpErrors.js';
 import type { CreateChannelInput } from '../common/schemas/channel.schema.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 export class ChannelService {
   constructor(
@@ -66,10 +67,22 @@ export class ChannelService {
       );
     }
 
-    return this.channelRepository.create({
-      name: normalizedName,
-      topic: data.topic,
-      groupId,
-    });
+    try {
+      return await this.channelRepository.create({
+        name: normalizedName,
+        topic: data.topic,
+        groupId,
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictError(
+          `Channel '#${normalizedName}' already exists in this group`,
+        );
+      }
+      throw err;
+    }
   }
 }

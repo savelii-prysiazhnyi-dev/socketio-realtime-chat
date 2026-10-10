@@ -7,6 +7,7 @@ import {
   ConflictError,
 } from '../common/errors/httpErrors.js';
 import type { CreateGroupInput } from '../common/schemas/group.schema.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 export class GroupService {
   constructor(
@@ -85,6 +86,16 @@ export class GroupService {
       throw new ConflictError('User is already a member of this group');
     }
 
-    return this.groupRepository.addMember(groupId, targetUserId, role);
+    try {
+      return await this.groupRepository.addMember(groupId, targetUserId, role);
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictError('User is already a member of this group');
+      }
+      throw err;
+    }
   }
 }

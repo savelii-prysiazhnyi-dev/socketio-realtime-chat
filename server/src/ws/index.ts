@@ -24,6 +24,8 @@ export const setupWebsocket = (io: Server): void => {
     const userGroupIds = new Set<string>();
     socket.data.userGroupIds = userGroupIds;
 
+    const isFirstConnection = presenceService.track(userId, socket.id);
+
     try {
       const userGroups = await groupService.getUserGroups(userId);
       for (const group of userGroups) {
@@ -34,7 +36,6 @@ export const setupWebsocket = (io: Server): void => {
       logger.error({ err, userId }, 'Failed to join group rooms on connection');
     }
 
-    const isFirstConnection = presenceService.track(userId, socket.id);
     if (isFirstConnection) {
       for (const groupId of userGroupIds) {
         socket.to(`group:${groupId}`).emit('user:presence', {
