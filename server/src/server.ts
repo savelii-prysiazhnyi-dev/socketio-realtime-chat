@@ -5,6 +5,7 @@ import buildApp from './app.js';
 import { logger } from './utils/logger.js';
 import { getCorsSettings } from './utils/cors.js';
 import { prisma } from './utils/prisma.js';
+import { setupWebsocket } from './ws/index.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -16,13 +17,7 @@ export const io = new Server(httpServer, {
   cors: corsSettings,
 });
 
-io.on('connection', socket => {
-  logger.info({ socketId: socket.id }, 'Socket connected');
-
-  socket.on('disconnect', () => {
-    logger.info({ socketId: socket.id }, 'Socket disconnected');
-  });
-});
+setupWebsocket(io);
 
 const start = async (): Promise<void> => {
   try {

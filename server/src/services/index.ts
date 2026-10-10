@@ -10,6 +10,8 @@ import { GroupService } from './group.service.js';
 import { ChannelService } from './channel.service.js';
 import { MessageService } from './message.service.js';
 
+import { presenceService, PresenceService } from './presence.service.js';
+
 export const authService = new AuthService(userRepository);
 export const userService = new UserService(userRepository);
 export const groupService = new GroupService(groupRepository, userRepository);
@@ -22,6 +24,7 @@ export const messageService = new MessageService(
   channelRepository,
   groupRepository,
 );
+export { presenceService };
 
 export {
   AuthService,
@@ -29,4 +32,5 @@ export {
   GroupService,
   ChannelService,
   MessageService,
+  PresenceService,
 };
