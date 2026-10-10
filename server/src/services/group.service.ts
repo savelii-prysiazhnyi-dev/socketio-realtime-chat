@@ -86,8 +86,24 @@ export class GroupService {
       throw new ConflictError('User is already a member of this group');
     }
 
+    const group = await this.groupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundError('Group not found');
+    }
+
     try {
-      return await this.groupRepository.addMember(groupId, targetUserId, role);
+      const member = await this.groupRepository.addMember(
+        groupId,
+        targetUserId,
+        role,
+      );
+      return {
+        member,
+        group: {
+          ...group,
+          role: actorMember.role,
+        },
+      };
     } catch (err) {
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&

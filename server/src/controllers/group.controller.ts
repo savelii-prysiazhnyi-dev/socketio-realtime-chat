@@ -85,13 +85,12 @@ export class GroupController {
         'Invalid add member body',
       );
       const role = data.role ? (data.role as MemberRole) : MemberRole.MEMBER;
-      const member = await this.groupService.addMember(
+      const { member, group } = await this.groupService.addMember(
         groupId,
         req.user!.id,
         data.userId,
         role,
       );
-      const group = await this.groupService.getGroupById(groupId, req.user!.id);
       this.wsEmitter.emitMemberJoined(groupId, {
         groupId,
         member,
