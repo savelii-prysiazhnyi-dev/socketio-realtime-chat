@@ -297,8 +297,8 @@ export function ChatArea({
         </div>
       )}
 
-      <div className="relative p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 min-h-[103px] h-[103px] shrink-0 z-10">
-        <div className="absolute bottom-3 left-3 right-3 rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow] z-20">
+      <div className="p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 shrink-0">
+        <div className="rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow]">
           <div className="px-3.5 pt-2.5 pb-2.5">
             <textarea
               ref={textareaRef}
