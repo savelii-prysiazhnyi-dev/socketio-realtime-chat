@@ -10,7 +10,7 @@ export const createGroupSchema = z.object({
 });
 
 export const groupIdParamsSchema = z.object({
-  groupId: z.string().uuid('Invalid group ID format'),
+  groupId: z.uuid('Invalid group ID format'),
 });
 
 export const addMemberSchema = z.object({
