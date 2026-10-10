@@ -21,6 +21,19 @@ export function InviteMemberModal({
   const [role, setRole] = useState<MemberRole>('MEMBER');
   const [error, setError] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setSelectedUserId('');
+    setRole('MEMBER');
+    setError(null);
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetForm();
+    }
+    onOpenChange(nextOpen);
+  };
+
   const { data: allUsers = [] } = useUsers();
   const { data: currentMembers = [] } = useGroupMembers(groupId);
   const addMemberMutation = useAddGroupMember(groupId);
@@ -41,7 +54,7 @@ export function InviteMemberModal({
         userId: selectedUserId,
         role,
       });
-      setSelectedUserId('');
+      resetForm();
       onOpenChange(false);
     } catch (err: unknown) {
       const message =
@@ -56,7 +69,7 @@ export function InviteMemberModal({
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="Invite Team Member"
       description="Select an existing user in the system to join this workspace."
     >
@@ -141,7 +154,7 @@ export function InviteMemberModal({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
           >
             Cancel
           </Button>
