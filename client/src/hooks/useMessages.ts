@@ -23,12 +23,19 @@ export function useSendMessage(channelId: string | undefined) {
 
   return useMutation<Message, Error, string>({
     mutationFn: (content: string) => sendMessage(channelId!, content),
-    onSuccess: () => {
-      if (channelId) {
-        queryClient.invalidateQueries({
-          queryKey: ['messages', channelId],
-        });
-      }
+    onSuccess: (message) => {
+      if (!channelId) return;
+      queryClient.setQueriesData<MessagesResponse>(
+        { queryKey: ['messages', channelId] },
+        (old) => {
+          if (!old) return old;
+          if (old.messages.some((m) => m.id === message.id)) return old;
+          return {
+            ...old,
+            messages: [...old.messages, message],
+          };
+        },
+      );
     },
   });
 }
