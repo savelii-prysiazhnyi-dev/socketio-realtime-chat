@@ -101,6 +101,16 @@ export function ChatArea({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollHeightBeforeLoadRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef<number>(0);
+  const isAtBottomRef = useRef<boolean>(true);
+  const prevChannelIdRef = useRef<string | undefined>(channel?.id);
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    isAtBottomRef.current = distanceFromBottom <= 80;
+  };
 
   const handleLoadOlder = () => {
     if (scrollContainerRef.current) {
@@ -111,6 +121,16 @@ export function ChatArea({
   };
 
   useLayoutEffect(() => {
+    if (prevChannelIdRef.current !== channel?.id) {
+      prevChannelIdRef.current = channel?.id;
+      prevMessagesLengthRef.current = messages.length;
+      isAtBottomRef.current = true;
+      if (messages.length > 0) {
+        messagesEndRef.current?.scrollIntoView();
+      }
+      return;
+    }
+
     if (
       scrollHeightBeforeLoadRef.current !== null &&
       scrollContainerRef.current
@@ -124,9 +144,14 @@ export function ChatArea({
       scrollHeightBeforeLoadRef.current = null;
     } else if (prevMessagesLengthRef.current === 0 && messages.length > 0) {
       messagesEndRef.current?.scrollIntoView();
+      isAtBottomRef.current = true;
+    } else if (messages.length > prevMessagesLengthRef.current) {
+      if (isAtBottomRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     prevMessagesLengthRef.current = messages.length;
-  }, [messages.length]);
+  }, [messages.length, channel?.id]);
 
   useEffect(() => {
     return () => {
@@ -192,6 +217,7 @@ export function ChatArea({
         textareaRef.current.style.overflowY = 'hidden';
       }
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      isAtBottomRef.current = true;
     } catch {
       return;
     }
@@ -257,6 +283,7 @@ export function ChatArea({
 
       <div
         ref={scrollContainerRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
       >
         {hasOlder && (
