@@ -28,6 +28,10 @@ export class PresenceService {
     return Array.from(this.userSockets.keys());
   }
 
+  getUserSocketCount(userId: string): number {
+    return this.userSockets.get(userId)?.size ?? 0;
+  }
+
   clear(): void {
     this.userSockets.clear();
   }

@@ -7,6 +7,7 @@ import { getCorsSettings } from './utils/cors.js';
 import { getJwtSecret } from './utils/jwt.js';
 import { prisma } from './utils/prisma.js';
 import { setupWebsocket } from './ws/index.js';
+import { getWsMaxPayloadBytes } from './ws/rateLimiter.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -16,6 +17,7 @@ const httpServer = createServer(app);
 const corsSettings = getCorsSettings();
 export const io = new Server(httpServer, {
   cors: corsSettings,
+  maxHttpBufferSize: getWsMaxPayloadBytes(),
 });
 
 setupWebsocket(io);

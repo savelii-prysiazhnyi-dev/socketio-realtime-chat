@@ -13,22 +13,45 @@ import { presenceService } from '../../src/services/presence.service.js';
 import { getCorsSettings } from '../../src/utils/cors.js';
 import { generateToken } from '../../src/utils/jwt.js';
 
+import {
+  wsRateLimiter,
+  WsRateLimiter,
+  getWsMaxPayloadBytes,
+  type WsRateLimitConfig,
+} from '../../src/ws/rateLimiter.js';
+
+export interface TestWsServerOptions {
+  maxHttpBufferSize?: number;
+  rateLimiterConfig?: Partial<WsRateLimitConfig>;
+  rateLimiter?: WsRateLimiter;
+}
+
 export interface TestWsServer {
   app: ReturnType<typeof buildApp>;
   httpServer: HttpServer;
   io: SocketIoServer;
   port: number;
+  rateLimiter: WsRateLimiter;
   close: () => Promise<void>;
 }
 
-export const createTestWsServer = async (): Promise<TestWsServer> => {
+export const createTestWsServer = async (
+  options?: TestWsServerOptions,
+): Promise<TestWsServer> => {
   const app = buildApp();
   const httpServer = createServer(app);
   const io = new SocketIoServer(httpServer, {
     cors: getCorsSettings(),
+    maxHttpBufferSize: options?.maxHttpBufferSize ?? getWsMaxPayloadBytes(),
   });
 
-  setupWebsocket(io);
+  const rateLimiter =
+    options?.rateLimiter ??
+    (options?.rateLimiterConfig
+      ? new WsRateLimiter(options.rateLimiterConfig)
+      : wsRateLimiter);
+
+  setupWebsocket(io, rateLimiter);
 
   await new Promise<void>(resolve => {
     httpServer.listen(0, () => resolve());
@@ -45,9 +68,10 @@ export const createTestWsServer = async (): Promise<TestWsServer> => {
       httpServer.close(() => resolve());
     });
     presenceService.clear();
+    rateLimiter.clear();
   };
 
-  return { app, httpServer, io, port, close };
+  return { app, httpServer, io, port, rateLimiter, close };
 };
 
 export const createTestClient = (

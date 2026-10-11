@@ -7,13 +7,83 @@ import {
   registerGroupHandlers,
   registerTypingHandlers,
 } from './handlers/index.js';
+import {
+  wsRateLimiter,
+  getClientIp,
+  type WsRateLimiter,
+} from './rateLimiter.js';
 
-export const setupWebsocket = (io: Server): void => {
+export const setupWebsocket = (
+  io: Server,
+  rateLimiter: WsRateLimiter = wsRateLimiter,
+): void => {
   wsEmitter.init(io);
+
+  io.use((socket, next) => {
+    if (rateLimiter.isGlobalCapacityExceeded(io.engine.clientsCount)) {
+      return next(
+        new Error('Server capacity reached. Please try again later.'),
+      );
+    }
+
+    const clientIp = getClientIp(socket);
+    if (rateLimiter.isHandshakeRateLimited(clientIp)) {
+      return next(
+        new Error('Too many connection attempts. Please try again later.'),
+      );
+    }
+
+    if (
+      rateLimiter.getIpSocketCount(clientIp) >=
+      rateLimiter.config.maxSocketsPerIp
+    ) {
+      return next(new Error('Maximum concurrent connections per IP exceeded'));
+    }
+
+    next();
+  });
+
   io.use(authSocketMiddleware);
+
+  io.use((socket, next) => {
+    const userId = socket.data.userId as string;
+    if (
+      presenceService.getUserSocketCount(userId) >=
+      rateLimiter.config.maxSocketsPerUser
+    ) {
+      return next(
+        new Error('Maximum concurrent connections per user exceeded'),
+      );
+    }
+    next();
+  });
 
   const onConnection = async (socket: Socket) => {
     const userId = socket.data.userId as string;
+    const clientIp = getClientIp(socket);
+
+    rateLimiter.trackIpSocket(clientIp, socket.id);
+
+    socket.use((_packet, next) => {
+      const check = rateLimiter.consumeEvent(socket.id);
+      if (check.isFlooding) {
+        socket.emit('error', {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many events. Connection terminated.',
+        });
+        socket.disconnect(true);
+        return;
+      }
+      if (check.isLimited) {
+        socket.emit('error', {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Rate limit exceeded',
+        });
+        return;
+      }
+      next();
+    });
+
     logger.info(
       { socketId: socket.id, userId },
       'Authenticated socket connected',
@@ -52,9 +122,12 @@ export const setupWebsocket = (io: Server): void => {
     logger.info({ userId, socketId: socket.id }, 'User connected to socket');
 
     registerGroupHandlers(io, socket);
-    registerTypingHandlers(io, socket);
+    registerTypingHandlers(io, socket, rateLimiter);
 
     socket.on('disconnect', () => {
+      rateLimiter.untrackIpSocket(clientIp, socket.id);
+      rateLimiter.removeSocketEvents(socket.id);
+
       const isLastConnection = presenceService.untrack(userId, socket.id);
       if (isLastConnection) {
         for (const groupId of userGroupIds) {
