@@ -5,9 +5,12 @@ import { getCorsSettings } from './utils/cors.js';
 import { logger } from './utils/logger.js';
 import { apiRoutes } from './routes/index.js';
 import { errorHandler } from './utils/errorHandler.js';
+import { generalRateLimiter } from './middlewares/rateLimit.middleware.js';
 
 export const buildApp = (): Express => {
   const app = express();
+
+  app.set('trust proxy', 1);
 
   app.use(
     pinoHttp({
@@ -30,7 +33,7 @@ export const buildApp = (): Express => {
     res.status(200).json({ status: 'ok' });
   });
 
-  app.use('/api', apiRoutes);
+  app.use('/api', generalRateLimiter, apiRoutes);
 
   app.use(errorHandler);
 
