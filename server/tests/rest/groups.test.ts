@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import buildApp from '../src/app.js';
-import { prisma } from '../src/utils/prisma.js';
-import { MemberRole } from '../generated/prisma/enums.js';
+import buildApp from '../../src/app.js';
+import { prisma } from '../../src/utils/prisma.js';
+import { MemberRole } from '../../generated/prisma/enums.js';
 
 const app = buildApp();
 

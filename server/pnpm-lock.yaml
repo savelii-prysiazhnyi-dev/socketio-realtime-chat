@@ -271,6 +271,9 @@ importers:
       prisma:
         specifier: ^7.10.0
         version: 7.10.0(@types/react@19.3.0)(better-sqlite3@13.0.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
+      socket.io-client:
+        specifier: ^4.8.4
+        version: 4.8.4
       supertest:
         specifier: ^7.3.1
         version: 7.3.1
@@ -1875,6 +1878,12 @@ packages:
         integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==,
       }
 
+  engine.io-client@6.6.7:
+    resolution:
+      {
+        integrity: sha512-GyAvmPA7gnRCpDQbYACAy79Lg4ewevrmaPzySZz0OVvgyZc3gEfLLqPTYk8wVBScjOEpM9ZO4KryyFpVItjGEA==,
+      }
+
   engine.io-parser@5.2.3:
     resolution:
       {
@@ -3121,6 +3130,13 @@ packages:
         integrity: sha512-6Oy52pbg+kvdCVvjcN+FnY7BvxZ7cIHNScbvztT/It5d0vbwoJoVZmF2gjJmnV0/4WlXRfG15zc45ySk9Ah8bw==,
       }
 
+  socket.io-client@4.8.4:
+    resolution:
+      {
+        integrity: sha512-7wjKAvVXYOJsbmUgkWbnhPD4bFpkqrUR0++XOjpGFmqDqsqV1CI93VTraeExLxpjxEqrWgFoSRZu1ihjLWfkAA==,
+      }
+    engines: { node: '>=10.0.0' }
+
   socket.io-parser@4.2.7:
     resolution:
       {
@@ -3453,6 +3469,13 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xmlhttprequest-ssl@2.1.2:
+    resolution:
+      {
+        integrity: sha512-TEU+nJVUUnA4CYJFLvK5X9AOeH4KvDvhIfm0vV1GaQRtchnG0hgK5p8hw/xjv8cunWYCsiPCSDzObPyhEwq3KQ==,
+      }
+    engines: { node: '>=0.4.0' }
 
   zeptomatch@2.1.0:
     resolution:
@@ -4289,6 +4312,18 @@ snapshots:
     dependencies:
       once: 1.4.0
 
+  engine.io-client@6.6.7:
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.4.3
+      engine.io-parser: 5.2.3
+      ws: 8.21.3
+      xmlhttprequest-ssl: 2.1.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   engine.io-parser@5.2.3: {}
 
   engine.io@6.6.11:
@@ -5039,6 +5074,17 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  socket.io-client@4.8.4:
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.4.3
+      engine.io-client: 6.6.7
+      socket.io-parser: 4.2.7
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   socket.io-parser@4.2.7:
     dependencies:
       '@socket.io/component-emitter': 3.1.2
@@ -5226,6 +5272,8 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.21.3: {}
+
+  xmlhttprequest-ssl@2.1.2: {}
 
   zeptomatch@2.1.0:
     dependencies:

@@ -27,6 +27,10 @@ export class PresenceService {
   getOnlineUsers(): string[] {
     return Array.from(this.userSockets.keys());
   }
+
+  clear(): void {
+    this.userSockets.clear();
+  }
 }
 
 export const presenceService = new PresenceService();

@@ -1,7 +1,11 @@
+import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { defineConfig } from 'vitest/config';
 
-dotenv.config({ path: '.env.test', override: true });
+dotenv.config({
+  path: existsSync('.env.test') ? '.env.test' : '.env.test.example',
+  override: true,
+});
 
 export default defineConfig({
   test: {
