@@ -2,6 +2,8 @@
 
 A full-stack, real-time messaging application designed for team collaboration. Built with a decoupled monorepo architecture featuring an Express and Socket.io backend paired with a high-performance React 19 frontend powered by Vite, Tailwind CSS v4, Zustand, and TanStack React Query.
 
+<video src="https://github.com/user-attachments/assets/f843831a-71af-4bfb-b9a9-267fe6b3a307"
+  controls autoplay loop muted width="100%"></video>
 ---
 
 ## Table of Contents
