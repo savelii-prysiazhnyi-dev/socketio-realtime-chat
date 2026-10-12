@@ -52,15 +52,15 @@ export function ProfileSelector({
   };
 
   return (
-    <div className="min-h-screen w-screen bg-[#09090b] text-zinc-100 flex flex-col justify-center items-center p-6 selection:bg-zinc-800 selection:text-zinc-100">
-      <div className="w-full max-w-3xl space-y-8 animate-in fade-in-0 duration-300">
-        <div className="text-center space-y-3">
+    <div className="min-h-[100dvh] w-full bg-[#09090b] text-zinc-100 flex flex-col justify-center items-center p-4 sm:p-6 selection:bg-zinc-800 selection:text-zinc-100">
+      <div className="w-full max-w-3xl space-y-6 sm:space-y-8 animate-in fade-in-0 duration-300">
+        <div className="text-center space-y-2.5 sm:space-y-3">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900/60 text-[11px] font-medium text-zinc-400">
             <Layers className="w-3.5 h-3.5 text-zinc-300" />
             <span>Chat Workspace Demo</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-100">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight text-zinc-100">
             Choose a profile to authenticate with
           </h1>
 
@@ -70,16 +70,16 @@ export function ProfileSelector({
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-56 rounded-lg border border-zinc-800/80 bg-zinc-950 p-5 animate-pulse"
+                className="h-56 rounded-lg border border-zinc-800/80 bg-zinc-950 p-4 sm:p-5 animate-pulse"
               />
             ))}
           </div>
         ) : users.length === 0 ? (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-8 text-center space-y-3 max-w-md mx-auto">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-6 sm:p-8 text-center space-y-3 max-w-md mx-auto">
             <p className="text-xs text-zinc-400">
               No demo profiles found in the database.
             </p>
@@ -88,7 +88,7 @@ export function ProfileSelector({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {users.map((user) => {
               const meta = getProfileMeta(user.name);
               const isSelected = selectedUserId === user.id && isLoggingIn;
@@ -97,7 +97,7 @@ export function ProfileSelector({
                 <div
                   key={user.id}
                   onClick={() => !isLoggingIn && onSelect(user.id)}
-                  className={`group relative rounded-lg border border-zinc-800/80 bg-zinc-950 p-5 flex flex-col justify-between transition-all duration-200 cursor-pointer ${meta.accentBorder} hover:bg-zinc-900/40 hover:shadow-xl`}
+                  className={`group relative rounded-lg border border-zinc-800/80 bg-zinc-950 p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 cursor-pointer ${meta.accentBorder} hover:bg-zinc-900/40 hover:shadow-xl`}
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">

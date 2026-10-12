@@ -14,6 +14,7 @@ import {
   RotateCw,
   MessageSquare,
   AlertCircle,
+  Menu,
 } from 'lucide-react';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
@@ -38,6 +39,7 @@ interface ChatAreaProps {
   membersOpen: boolean;
   currentUser?: User | null;
   members?: GroupMember[];
+  onOpenNav?: () => void;
 }
 
 export function ChatArea({
@@ -51,6 +53,7 @@ export function ChatArea({
   membersOpen,
   currentUser,
   members,
+  onOpenNav,
 }: ChatAreaProps) {
   const [content, setContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,6 +63,8 @@ export function ChatArea({
 
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
   const isConnected = useSocketStore((state) => state.isConnected);
+  const unreadChannelIds = useSocketStore((state) => state.unreadChannelIds);
+  const hasUnreadAnywhere = unreadChannelIds.size > 0;
   const typingUserIds = useSocketStore((state) =>
     channel ? state.typingUsers[channel.id] : undefined,
   );
@@ -240,28 +245,52 @@ export function ChatArea({
 
   if (!channel) {
     return (
-      <div className="flex-1 bg-[#09090b] flex flex-col items-center justify-center text-zinc-500 select-none">
+      <div className="flex-1 bg-[#09090b] flex flex-col items-center justify-center text-zinc-500 select-none p-4 text-center">
         <MessageSquare className="w-10 h-10 text-zinc-700 mb-3" />
         <p className="text-sm font-medium text-zinc-400">Select a channel to begin</p>
         <p className="text-xs text-zinc-600 mt-1">
           Pick a workspace channel from the left sidebar
         </p>
+        {onOpenNav && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenNav}
+            className="md:hidden mt-4 gap-1.5 text-xs text-zinc-300 border-zinc-700"
+          >
+            <Menu className="w-3.5 h-3.5" />
+            <span>Browse Channels</span>
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex-1 bg-[#09090b] flex flex-col h-full min-w-0">
-      <div className="h-12 border-b border-[#1f1f23] px-4 flex items-center justify-between shrink-0 bg-[#0c0c0e]/60 backdrop-blur">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="h-12 border-b border-[#1f1f23] px-3 sm:px-4 flex items-center justify-between shrink-0 bg-[#0c0c0e]/60 backdrop-blur">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {onOpenNav && (
+            <button
+              type="button"
+              onClick={onOpenNav}
+              className="md:hidden p-1.5 -ml-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors relative cursor-pointer"
+              title="Open Navigation"
+            >
+              <Menu className="w-4 h-4" />
+              {hasUnreadAnywhere && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0c0c0e]" />
+              )}
+            </button>
+          )}
           <Hash className="w-4 h-4 text-zinc-400 shrink-0" />
           <h1 className="text-xs font-semibold text-zinc-100 truncate tracking-tight">
             {channel.name}
           </h1>
           {channel.topic && (
             <>
-              <div className="w-[1px] h-3 bg-zinc-800 shrink-0" />
-              <p className="text-xs text-zinc-500 truncate">{channel.topic}</p>
+              <div className="hidden sm:block w-[1px] h-3 bg-zinc-800 shrink-0" />
+              <p className="hidden sm:block text-xs text-zinc-500 truncate">{channel.topic}</p>
             </>
           )}
         </div>
@@ -284,7 +313,7 @@ export function ChatArea({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4"
       >
         {hasOlder && (
           <div className="flex justify-center pb-2">
@@ -363,13 +392,13 @@ export function ChatArea({
       </div>
 
       {typingText && (
-        <div className="px-4 py-1 text-[11px] text-zinc-400 italic bg-[#0c0c0e]/40 shrink-0 flex items-center gap-1.5 animate-pulse">
+        <div className="px-3 sm:px-4 py-1 text-[11px] text-zinc-400 italic bg-[#0c0c0e]/40 shrink-0 flex items-center gap-1.5 animate-pulse">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
           <span>{typingText}</span>
         </div>
       )}
 
-      <div className="p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 shrink-0">
+      <div className="p-2.5 sm:p-3 border-t border-[#1f1f23] bg-[#0c0c0e]/80 shrink-0">
         {sendErrorMessage && (
           <div className="mb-2 px-3 py-1.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center justify-between">
             <div className="flex items-center gap-1.5 truncate">
@@ -386,7 +415,7 @@ export function ChatArea({
           </div>
         )}
         <div className="rounded-lg border border-zinc-800 bg-[#121215] shadow-2xl shadow-black/80 focus-within:border-zinc-700 transition-[border-color,box-shadow]">
-          <div className="px-3.5 pt-2.5 pb-2.5">
+          <div className="px-3 sm:px-3.5 pt-2 sm:pt-2.5 pb-2 sm:pb-2.5">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -401,11 +430,11 @@ export function ChatArea({
 
           <div className="h-[1px] bg-zinc-800/60 w-full" />
 
-          <div className="flex items-center justify-between px-3.5 py-1.5 text-[10px] text-zinc-500 bg-zinc-950/30 rounded-b-lg">
+          <div className="flex items-center justify-between px-3 sm:px-3.5 py-1.5 text-[10px] text-zinc-500 bg-zinc-950/30 rounded-b-lg">
             <span className="font-mono text-[10px] text-zinc-500">
               {content.length > 0 ? `${content.length} / 4000` : ''}
             </span>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <span className="hidden sm:inline text-zinc-500 text-[11px]">
                 Shift + Enter for new line
               </span>

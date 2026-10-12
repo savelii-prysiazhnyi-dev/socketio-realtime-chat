@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { UserPlus, Shield, Crown } from 'lucide-react';
+import { UserPlus, Shield, Crown, X } from 'lucide-react';
 import { Button } from '../ui/button.tsx';
 import { Avatar } from '../ui/avatar.tsx';
 import { Badge } from '../ui/badge.tsx';
+import { cn } from '../../lib/utils.ts';
 import { useSocketStore } from '../../stores/useSocketStore.ts';
 import type { GroupMember, Group, User } from '../../types/index.ts';
 
@@ -11,6 +12,8 @@ interface MembersSidebarProps {
   members: GroupMember[];
   currentUser?: User | null;
   onOpenInvite: () => void;
+  onCloseMobile?: () => void;
+  className?: string;
 }
 
 export function MembersSidebar({
@@ -18,6 +21,8 @@ export function MembersSidebar({
   members,
   currentUser,
   onOpenInvite,
+  onCloseMobile,
+  className,
 }: MembersSidebarProps) {
   const onlineUsers = useSocketStore((state) => state.onlineUsers);
   const isConnected = useSocketStore((state) => state.isConnected);
@@ -95,22 +100,39 @@ export function MembersSidebar({
   };
 
   return (
-    <div className="w-60 bg-[#111114] border-l border-[#1f1f23] flex flex-col h-full select-none shrink-0">
+    <div
+      className={cn(
+        'w-60 bg-[#111114] border-l border-[#1f1f23] flex flex-col h-full select-none shrink-0',
+        className,
+      )}
+    >
       <div className="h-12 border-b border-[#1f1f23] px-3.5 flex items-center justify-between">
         <span className="text-xs font-semibold text-zinc-100 tracking-tight">
           Workspace Members
         </span>
-        {canInvite && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onOpenInvite}
-            title="Invite Member"
-            className="h-6 w-6 text-zinc-400 hover:text-zinc-100"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {canInvite && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onOpenInvite}
+              title="Invite Member"
+              className="h-6 w-6 text-zinc-400 hover:text-zinc-100 cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          {onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              title="Close members"
+              className="lg:hidden p-1 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">

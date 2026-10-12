@@ -25,7 +25,10 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   const queryClient = useQueryClient();
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
-  const [membersOpen, setMembersOpen] = useState(true);
+  const [membersOpen, setMembersOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 1280 : false,
+  );
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [createChannelOpen, setCreateChannelOpen] = useState(false);
@@ -97,28 +100,66 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
   }, [effectiveGroupId, isConnected, joinGroup]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">
-      <GroupRail
-        groups={groups}
-        activeGroupId={effectiveGroupId}
-        onSelectGroup={(id) => {
-          setActiveGroupId(id);
-          setActiveChannelId(null);
-        }}
-        onOpenCreateGroup={() => setCreateGroupOpen(true)}
-        onOpenDemoLogin={() => setDemoLoginOpen(true)}
-      />
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">
+      <div className="hidden md:flex shrink-0 h-full">
+        <GroupRail
+          groups={groups}
+          activeGroupId={effectiveGroupId}
+          onSelectGroup={(id) => {
+            setActiveGroupId(id);
+            setActiveChannelId(null);
+          }}
+          onOpenCreateGroup={() => setCreateGroupOpen(true)}
+          onOpenDemoLogin={() => setDemoLoginOpen(true)}
+        />
 
-      <ChannelSidebar
-        group={activeGroup}
-        channels={channels}
-        activeChannelId={effectiveChannelId}
-        currentUser={currentUser}
-        onSelectChannel={(id) => setActiveChannelId(id)}
-        onOpenCreateChannel={() => setCreateChannelOpen(true)}
-        onOpenDemoLogin={() => setDemoLoginOpen(true)}
-        onLogout={onLogout}
-      />
+        <ChannelSidebar
+          group={activeGroup}
+          channels={channels}
+          activeChannelId={effectiveChannelId}
+          currentUser={currentUser}
+          onSelectChannel={(id) => setActiveChannelId(id)}
+          onOpenCreateChannel={() => setCreateChannelOpen(true)}
+          onOpenDemoLogin={() => setDemoLoginOpen(true)}
+          onLogout={onLogout}
+        />
+      </div>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          <div className="relative z-50 flex h-full max-w-[88vw] shadow-2xl animate-in slide-in-from-left duration-200">
+            <GroupRail
+              groups={groups}
+              activeGroupId={effectiveGroupId}
+              onSelectGroup={(id) => {
+                setActiveGroupId(id);
+                setActiveChannelId(null);
+              }}
+              onOpenCreateGroup={() => setCreateGroupOpen(true)}
+              onOpenDemoLogin={() => setDemoLoginOpen(true)}
+            />
+
+            <ChannelSidebar
+              group={activeGroup}
+              channels={channels}
+              activeChannelId={effectiveChannelId}
+              currentUser={currentUser}
+              onSelectChannel={(id) => {
+                setActiveChannelId(id);
+                setMobileNavOpen(false);
+              }}
+              onOpenCreateChannel={() => setCreateChannelOpen(true)}
+              onOpenDemoLogin={() => setDemoLoginOpen(true)}
+              onLogout={onLogout}
+              onCloseMobile={() => setMobileNavOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       <ChatArea
         key={effectiveChannelId ?? 'none'}
@@ -132,15 +173,37 @@ export function ChatWorkspace({ currentUser, onLogout }: ChatWorkspaceProps) {
         membersOpen={membersOpen}
         currentUser={currentUser}
         members={members}
+        onOpenNav={() => setMobileNavOpen(true)}
       />
 
       {membersOpen && effectiveGroupId && (
-        <MembersSidebar
-          group={activeGroup}
-          members={members}
-          currentUser={currentUser}
-          onOpenInvite={() => setInviteMemberOpen(true)}
-        />
+        <>
+          <div className="hidden lg:flex shrink-0 h-full">
+            <MembersSidebar
+              group={activeGroup}
+              members={members}
+              currentUser={currentUser}
+              onOpenInvite={() => setInviteMemberOpen(true)}
+            />
+          </div>
+
+          <div className="fixed inset-0 z-40 lg:hidden flex justify-end">
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+              onClick={() => setMembersOpen(false)}
+            />
+            <div className="relative z-50 flex h-full shadow-2xl animate-in slide-in-from-right duration-200">
+              <MembersSidebar
+                group={activeGroup}
+                members={members}
+                currentUser={currentUser}
+                onOpenInvite={() => setInviteMemberOpen(true)}
+                onCloseMobile={() => setMembersOpen(false)}
+                className="w-72 max-w-[85vw]"
+              />
+            </div>
+          </div>
+        </>
       )}
 
       <CreateGroupModal

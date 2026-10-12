@@ -30,9 +30,9 @@ export function GroupRail({
   };
 
   return (
-    <div className="w-16 bg-[#0c0c0e] border-r border-[#1f1f23] flex flex-col items-center py-3 select-none shrink-0 z-20">
-      <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 mb-4 shadow-sm">
-        <Layers className="w-5 h-5 text-zinc-200" />
+    <div className="w-14 sm:w-16 bg-[#0c0c0e] border-r border-[#1f1f23] flex flex-col items-center py-3 select-none shrink-0 z-20">
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 mb-3 sm:mb-4 shadow-sm">
+        <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-200" />
       </div>
 
       <div className="w-8 h-[1px] bg-zinc-800/80 mb-3" />
@@ -57,7 +57,7 @@ export function GroupRail({
                 type="button"
                 onClick={() => onSelectGroup(group.id)}
                 title={group.name}
-                className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
+                className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-xs font-semibold tracking-tight transition-all cursor-pointer border ${
                   isActive
                     ? 'bg-zinc-800 text-zinc-100 border-zinc-600 shadow-md'
                     : 'bg-zinc-900/60 text-zinc-400 border-zinc-800/80 hover:bg-zinc-800/80 hover:text-zinc-200 hover:border-zinc-700'
@@ -78,7 +78,7 @@ export function GroupRail({
           type="button"
           onClick={onOpenCreateGroup}
           title="Create Workspace"
-          className="w-10 h-10 rounded-lg border border-dashed border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:border-zinc-600 hover:bg-zinc-900/50 transition-colors cursor-pointer"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-dashed border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:border-zinc-600 hover:bg-zinc-900/50 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -89,7 +89,7 @@ export function GroupRail({
           type="button"
           onClick={onOpenDemoLogin}
           title="Switch Account"
-          className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-colors cursor-pointer"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-colors cursor-pointer"
         >
           <Users className="w-4 h-4" />
         </button>
