@@ -10,6 +10,7 @@ import { setupWebsocket } from './ws/index.js';
 import { getWsMaxPayloadBytes } from './ws/rateLimiter.js';
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 const app = buildApp();
 const httpServer = createServer(app);
@@ -28,7 +29,7 @@ const start = async (): Promise<void> => {
     await prisma.$connect();
     logger.info('Database connected successfully');
 
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, HOST, () => {
       logger.info(`Server running on port ${PORT}`);
     });
   } catch (err) {
