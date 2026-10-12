@@ -35,9 +35,9 @@ export function GroupRail({
         <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-200" />
       </div>
 
-      <div className="w-8 h-[1px] bg-zinc-800/80 mb-3" />
+      <div className="w-8 h-[1px] bg-zinc-800/80 mb-2" />
 
-      <div className="flex-1 w-full space-y-2 overflow-y-auto px-2 flex flex-col items-center">
+      <div className="flex-1 w-full space-y-2 overflow-y-auto px-2 pt-2 pb-2 flex flex-col items-center">
         {groups.map((group) => {
           const isActive = group.id === activeGroupId;
           const unreadCount = unreadGroupChannels[group.id]?.size ?? 0;
