@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/server.ts",
+    "start:prod": "prisma migrate deploy && node dist/prisma/seed.js && node dist/src/server.js",
     "dev": "tsx watch src/server.ts",
     "seed": "tsx prisma/seed.ts",
     "test": "vitest run",
@@ -19,13 +20,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.9.1",
-      "onFail": "download"
-    }
-  },
   "packageManager": "pnpm@12.9.1",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -46,6 +40,7 @@
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
+    "prisma": "^7.10.0",
     "socket.io": "^4.8.4",
     "zod": "^4.6.5"
   },
@@ -59,7 +54,6 @@
     "oxlint": "^1.87.0",
     "pino-pretty": "^13.2.0",
     "prettier": "^3.9.9",
-    "prisma": "^7.10.0",
     "socket.io-client": "^4.8.4",
     "supertest": "^7.3.1",
     "typescript": "^7.0.2",

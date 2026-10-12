@@ -1,0 +1,46 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: chat-server:latest
+    container_name: chat_server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./server/.env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/prod.db
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - JWT_SECRET=${JWT_SECRET:-dev-chat-jwt-secret-key-32chars!!}
+    volumes:
+      - server_data:/app/data
+    networks:
+      - app-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    image: chat-client:latest
+    container_name: chat_client
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    env_file:
+      - ./client/.env
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+volumes:
+  server_data:
+
+networks:
+  app-network:
+    driver: bridge

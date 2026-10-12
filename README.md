@@ -15,6 +15,7 @@ A full-stack, real-time messaging application designed for team collaboration. B
   - [1. Install Dependencies](#1-install-dependencies)
   - [2. Database Setup & Seeding](#2-database-setup--seeding)
   - [3. Start Development Servers](#3-start-development-servers)
+- [Production Docker Deployment](#production-docker-deployment)
 - [API & Event Specifications](#api--event-specifications)
   - [REST API Endpoints](#rest-api-endpoints)
   - [WebSocket Events](#websocket-events)
@@ -74,6 +75,9 @@ The system employs a layered service-oriented architecture:
 │   │   ├── lib/                # Axios client configuration and token getters
 │   │   ├── stores/             # Zustand stores (useSocketStore)
 │   │   └── types/              # Shared TypeScript definitions
+│   ├── Dockerfile              # Multi-stage production Docker build (Vite + Nginx)
+│   ├── .dockerignore
+│   ├── nginx.conf              # Production Nginx reverse-proxy and SPA routing
 │   ├── package.json
 │   └── vite.config.ts
 ├── server/                     # Backend API & WebSocket Server
@@ -95,6 +99,8 @@ The system employs a layered service-oriented architecture:
 │   ├── tests/
 │   │   ├── rest/               # Integration tests for REST API routes
 │   │   └── ws/                 # Integration tests for WebSocket gateway
+│   ├── Dockerfile              # Multi-stage production Docker build (Node 22 slim)
+│   ├── .dockerignore
 │   └── package.json
 ├── docs/                       # Technical architecture & design documentation
 │   ├── frontend-ui.md
@@ -102,6 +108,7 @@ The system employs a layered service-oriented architecture:
 │   ├── websocket-architecture.md
 │   ├── websocket-code-snippets.md
 │   └── websocket-testing-specification.md
+├── docker-compose.yml          # Production multi-container orchestration
 └── AGENTS.md                   # Repository engineering and quality rules
 ```
 
@@ -117,7 +124,12 @@ The system employs a layered service-oriented architecture:
 
 ## Environment Configuration
 
-Both the server and client utilize `.env` files for runtime configuration.
+Both the server and client utilize `.env` files for runtime configuration. You **must** copy the example environment files to `.env` before running locally or with Docker:
+
+```bash
+cp server/.env.example server/.env
+cp client/.env.example client/.env
+```
 
 ### Server (`server/.env`)
 
@@ -168,8 +180,8 @@ pnpm --dir client install
 Run database migrations to generate the SQLite database and seed initial test fixtures (demo users, sample workspaces, channels, and messages):
 
 ```bash
-# Generate Prisma Client & apply migrations
-pnpm --dir server exec prisma migrate dev --name init
+# Apply existing migrations from prisma/migrations/
+pnpm --dir server exec prisma migrate deploy
 
 # Seed development users and workspaces
 pnpm --dir server run seed
@@ -195,6 +207,46 @@ pnpm --dir client run dev
 ```
 
 Visit `http://localhost:5173` to open the application.
+
+---
+
+## Production Docker Deployment
+
+The application features a production-ready, multi-stage Docker configuration:
+
+- **Server**: Minimal `node:22-slim` base with cached pnpm store, compiled TypeScript assets, automated Prisma migration deployment (`prisma migrate deploy`), persistent SQLite storage volume (`server_data:/app/data`), non-root `node` execution user, and graceful shutdown handling.
+- **Client**: Multi-stage Vite production compilation served by an ultra-lightweight `nginx:alpine` image with gzip compression, immutable asset caching, and SPA fallback routing.
+- **Orchestration**: `docker-compose.yml` connects the services together on an isolated bridge network with container names and persistent volume mounts.
+
+### Running with Docker Compose
+
+1. **Configure Environment Files (Mandatory Prerequisite)**:
+   Docker Compose expects both `./server/.env` and `./client/.env` to exist. Copy both example files before starting containers:
+   ```bash
+   cp server/.env.example server/.env
+   cp client/.env.example client/.env
+   ```
+
+2. **Build and Start Containers**:
+   ```bash
+   docker compose up --build -d
+   ```
+   *Note: On initial boot with a fresh volume, the server automatically deploys database migrations and seeds initial demo personas (Alice, Bob, Charlie, etc.). On subsequent restarts, existing data is preserved.*
+
+3. **Verify Status & Logs**:
+   ```bash
+   docker compose ps
+   docker compose logs -f
+   ```
+
+4. **Access Applications**:
+   - Frontend Client: `http://localhost:5173`
+   - Backend API & WebSockets: `http://localhost:3000`
+
+5. **Stop Containers**:
+   ```bash
+   docker compose down
+   ```
 
 ---
 

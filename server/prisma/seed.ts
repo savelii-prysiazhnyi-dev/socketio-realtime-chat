@@ -2,12 +2,22 @@ import { prisma } from '../src/utils/prisma.js';
 import { MemberRole } from '../generated/prisma/enums.js';
 
 export async function seed() {
-  console.log('Clearing existing data...');
-  await prisma.message.deleteMany();
-  await prisma.channel.deleteMany();
-  await prisma.groupMember.deleteMany();
-  await prisma.group.deleteMany();
-  await prisma.user.deleteMany();
+  const isForce = process.env.FORCE_SEED === 'true';
+  const existingUsers = await prisma.user.count();
+
+  if (existingUsers > 0 && !isForce) {
+    console.log('Database already contains data, skipping seed.');
+    return;
+  }
+
+  if (isForce) {
+    console.log('Clearing existing data...');
+    await prisma.message.deleteMany();
+    await prisma.channel.deleteMany();
+    await prisma.groupMember.deleteMany();
+    await prisma.group.deleteMany();
+    await prisma.user.deleteMany();
+  }
 
   console.log('Creating demo users (personas)...');
   const alice = await prisma.user.create({

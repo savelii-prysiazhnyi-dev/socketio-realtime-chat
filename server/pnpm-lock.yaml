@@ -237,6 +237,9 @@ importers:
       pino-http:
         specifier: ^11.0.0
         version: 11.0.0
+      prisma:
+        specifier: ^7.10.0
+        version: 7.10.0(@types/react@19.3.0)(better-sqlite3@13.0.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
       socket.io:
         specifier: ^4.8.4
         version: 4.8.4
@@ -271,9 +274,6 @@ importers:
       prettier:
         specifier: ^3.9.9
         version: 3.9.9
-      prisma:
-        specifier: ^7.10.0
-        version: 7.10.0(@types/react@19.3.0)(better-sqlite3@13.0.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
       socket.io-client:
         specifier: ^4.8.4
         version: 4.8.4
